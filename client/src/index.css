@@ -1,0 +1,45 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(42, 38, 32, 0.2);
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+a {
+  color: var(--accent, #3d6b53);
+  text-decoration: none;
+}
+a:hover {
+  color: #345c47;
+}
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent, #3d6b53);
+}
+/* row hover helper (inline styles can't do :hover) */
+tr.lm-row:hover {
+  background: var(--bg-rowhover, #f7f1e3);
+}
+.lm-hover:hover {
+  filter: brightness(0.96);
+}
