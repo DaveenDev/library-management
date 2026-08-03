@@ -66,5 +66,26 @@ export default tseslint.config(
       },
     },
   },
+  {
+    // The beta-test harness (.claude/skills/beta-test) is a Node script that
+    // also contains browser code: the callbacks passed to `page.evaluate` run
+    // inside Chromium, so both sets of globals are legitimate in one file.
+    files: [".claude/**/*.mjs"],
+    languageOptions: {
+      globals: {
+        process: "readonly",
+        console: "readonly",
+        fetch: "readonly",
+        URL: "readonly",
+        AbortSignal: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        document: "readonly",
+        window: "readonly",
+        getComputedStyle: "readonly",
+        CSS: "readonly",
+      },
+    },
+  },
   prettier,
 );

@@ -1,0 +1,12 @@
+{
+  "name": "lumen-beta-test",
+  "private": true,
+  "type": "module",
+  "description": "Browser-driven beta test harness. Deliberately outside the app's workspaces so Playwright is not a dependency of the product.",
+  "scripts": {
+    "beta": "node runner.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}

@@ -1,0 +1,748 @@
+{
+  "startedAt": 1785797737594,
+  "finishedAt": 1785798193088,
+  "results": [
+    {
+      "id": "sign-in-happy",
+      "title": "A librarian signs in and finds their own name on screen",
+      "persona": "signed out",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "The app asks who I am before showing anything",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "A wrong password is refused, and says so",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "The right password gets me in",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "The sidebar shows me, not a placeholder",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Reloading keeps me signed in",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Signing out returns me to the form",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "And the session is really gone after sign-out",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [],
+      "consoleErrors": [],
+      "screenshots": [
+        "sign-in-happy-01-signed-in.png"
+      ],
+      "ms": 42687
+    },
+    {
+      "id": "sign-in-disabled-account",
+      "title": "A disabled account cannot get in, and is told why",
+      "persona": "signed out",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "Sara Kim's account has been disabled",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Being disabled is not a way to guess who works here",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [],
+      "consoleErrors": [],
+      "screenshots": [],
+      "ms": 26771
+    },
+    {
+      "id": "circulation-desk",
+      "title": "A whole shift at the desk: check out, renew, check in",
+      "persona": "librarian",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "Open Circulation",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Scan a book and a member card to check out",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "The loan appears in Active Loans",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "The scanner fields clear themselves for the next reader",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Renew the loan and see a new due date",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Check the book back in by scanning it",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "The returned loan leaves the active list",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "An unknown barcode is refused clearly, not silently",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [
+        {
+          "severity": "polish",
+          "text": "Unknown barcode says: “book not found”"
+        }
+      ],
+      "consoleErrors": [],
+      "screenshots": [
+        "circulation-desk-01-active-loan.png"
+      ],
+      "ms": 18460
+    },
+    {
+      "id": "circulation-refusals",
+      "title": "The desk refuses what it should: suspended readers and empty shelves",
+      "persona": "librarian",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "A suspended member cannot borrow",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Borrowing the last copy empties the shelf",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Checking out with no member is refused rather than half-done",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [
+        {
+          "severity": "polish",
+          "text": "\"A Brief History of Time\" starts at 1 / 2 copies available"
+        }
+      ],
+      "consoleErrors": [],
+      "screenshots": [],
+      "ms": 18133
+    },
+    {
+      "id": "catalogue-lifecycle",
+      "title": "Catalogue a new title, correct it, then withdraw it",
+      "persona": "librarian",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "Open the catalogue",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Add a book",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "It is findable by title",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "It was given a barcode and an accession number automatically",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "All three copies show as available",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Correcting the title does not disturb anything else",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Withdraw it again",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [],
+      "consoleErrors": [],
+      "screenshots": [],
+      "ms": 19745
+    },
+    {
+      "id": "borrowers-lifecycle",
+      "title": "Register a borrower, read their history, suspend them",
+      "persona": "librarian",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "Open Borrowers",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Register a new student",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "They appear with a membership code and nothing borrowed",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Their borrowing history opens and is empty",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Suspending them sticks",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "A suspended member's other details survived the change",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Remove the test record so the next run starts clean",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [],
+      "consoleErrors": [],
+      "screenshots": [
+        "borrowers-lifecycle-01-empty-history.png"
+      ],
+      "ms": 21351
+    },
+    {
+      "id": "holds-queue",
+      "title": "Place a hold on a title that is out, then fulfil it",
+      "persona": "librarian",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "Find a title with copies out",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Reserve it for a reader",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "The hold shows in the queue with a status",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "The same reader cannot hold the same book twice",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "A second reader joins the queue behind the first",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Fulfilling the first hold takes it out of the queue",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "A fulfilled hold can no longer be cancelled",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Cancelling the second hold clears the queue",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [],
+      "consoleErrors": [],
+      "screenshots": [
+        "holds-queue-01-holds-queue.png"
+      ],
+      "ms": 52985
+    },
+    {
+      "id": "fines-desk",
+      "title": "Collect and waive an overdue fine",
+      "persona": "librarian",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "Open Fines",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "The seeded library has money owed",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Collecting a fine marks it paid and moves the totals",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "A paid fine offers no further action",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Waiving works too, and is distinguishable from collecting",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [],
+      "consoleErrors": [],
+      "screenshots": [
+        "fines-desk-01-fines-list.png"
+      ],
+      "ms": 16412
+    },
+    {
+      "id": "role-assistant",
+      "title": "An assistant can work the desk but not run the library",
+      "persona": "assistant",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "They are told which role they hold",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "User Management is not offered to them at all",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "They can still read the catalogue",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "But they are not offered Add, Edit or Delete",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "They can check a book out — that is their job",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Fines are visible but not collectable by them",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Fine policy is readable but locked",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "And the shelf lists cannot be edited",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Tidy up: return the book they borrowed",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [],
+      "consoleErrors": [],
+      "screenshots": [
+        "role-assistant-01-assistant-catalogue.png"
+      ],
+      "ms": 17440
+    },
+    {
+      "id": "role-librarian",
+      "title": "A librarian runs the collection but not the staff list",
+      "persona": "librarian",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "They can catalogue",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "They can collect fines",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "But staff accounts are not theirs to manage",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "And fine policy is an administrator's call",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Changing the theme still works for them",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [
+        {
+          "severity": "polish",
+          "text": "Theme persisted across reload as rgb(221, 227, 208)"
+        }
+      ],
+      "consoleErrors": [],
+      "screenshots": [],
+      "ms": 31963
+    },
+    {
+      "id": "role-admin",
+      "title": "An administrator manages staff accounts",
+      "persona": "admin",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "User Management is available to them",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "The roles card describes what the roles actually do",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Add a staff account with a password",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "A short password is refused before it is stored",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "The new clerk can sign in with what they were given",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "An admin cannot lock themselves out",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Tidy up: remove the test clerk",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [],
+      "consoleErrors": [],
+      "screenshots": [
+        "role-admin-01-roles-card.png"
+      ],
+      "ms": 19410
+    },
+    {
+      "id": "reports-and-exports",
+      "title": "Pull a report and export it",
+      "persona": "librarian",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "Open Reports",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Every report tab loads without an error",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "The date range filters a report that is about a period",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "But it is offered on reports it does not apply to",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Excel export downloads a file",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "PDF export downloads a file",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [
+        {
+          "severity": "minor",
+          "text": "The report period picker sits above every report, but only Most Borrowed and the Transaction Log consult it — Overdue, Fines, List of Books, Inventory and Member Activity ignore it silently, so a narrowed range looks like it did nothing"
+        },
+        {
+          "severity": "polish",
+          "text": "Excel export produced overdue-report-2030-01-01.xlsx"
+        },
+        {
+          "severity": "polish",
+          "text": "PDF export produced overdue-report-2030-01-01.pdf"
+        }
+      ],
+      "consoleErrors": [],
+      "screenshots": [
+        "reports-and-exports-01-report.png"
+      ],
+      "ms": 33378
+    },
+    {
+      "id": "labels",
+      "title": "Generate a sheet of scannable labels",
+      "persona": "librarian",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "Open Labels & Barcodes",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Book spine labels render real barcodes",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Switching to QR pocket labels re-renders",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "The quantity drives the sheet",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Borrower ID cards work the same way",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "The label pickers are reachable by keyboard",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [],
+      "consoleErrors": [],
+      "screenshots": [
+        "labels-01-spine-labels.png",
+        "labels-02-qr-labels.png"
+      ],
+      "ms": 21916
+    },
+    {
+      "id": "settings",
+      "title": "An administrator changes fine policy and the shelf list",
+      "persona": "admin",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "Open Settings",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "It shows the library's real values, not placeholders",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Changing the daily rate saves and survives a reload",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Put it back",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "A shelf can be added and removed",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Configured lists reach the forms that should offer them",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [
+        {
+          "severity": "polish",
+          "text": "Loaded policy: 0.50 per day, 14-day loans"
+        },
+        {
+          "severity": "major",
+          "text": "Settings has an editable Book Shelves list (\"Shelf codes used for physical placement\"), but Add Book takes the shelf as free text and never offers it — so the configured codes are decorative and a typo creates a shelf that does not exist"
+        }
+      ],
+      "consoleErrors": [],
+      "screenshots": [],
+      "ms": 43532
+    },
+    {
+      "id": "phone-shift",
+      "title": "A librarian works from a phone",
+      "persona": "librarian",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "Signing in fits on the screen",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "The navigation is behind a menu button",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Escape closes the drawer again",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Every screen fits without sideways scrolling",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "A check-out can still be completed on a phone",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "And undone again",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [],
+      "consoleErrors": [],
+      "screenshots": [
+        "phone-shift-01-phone-front-desk.png",
+        "phone-shift-02-phone-drawer.png",
+        "phone-shift-03-phone-checkout.png"
+      ],
+      "ms": 34746
+    },
+    {
+      "id": "keyboard-only",
+      "title": "Someone working without a mouse can still get around",
+      "persona": "librarian",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "Every button on a page has a name to announce",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Every form control has a label",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "A dialog takes focus and keeps it",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Escape closes it and gives focus back",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "The current page is marked for a screen reader",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Toasts are announced, not just drawn",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [],
+      "consoleErrors": [],
+      "screenshots": [],
+      "ms": 31024
+    }
+  ]
+}
