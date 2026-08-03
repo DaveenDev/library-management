@@ -1,5 +1,23 @@
 // Shared domain types used by both the Express API and the React client.
 
+// ---------- Currency ----------
+// Single source of truth so the server's report strings and the client's
+// tables/tiles can never drift apart.
+export const CURRENCY_SYMBOL = "₱"; // ₱
+export const CURRENCY_CODE = "PHP";
+
+/** Format an amount for display, e.g. 12.5 -> "₱12.50". */
+export function money(amount: number): string {
+  const n = Number.isFinite(amount) ? amount : 0;
+  return `${CURRENCY_SYMBOL}${n.toFixed(2)}`;
+}
+
+/** Inverse of `money` — pulls the number back out of a formatted string. */
+export function parseMoney(text: string | number): number {
+  if (typeof text === "number") return text;
+  return Number(String(text).replace(/[^0-9.-]/g, ""));
+}
+
 export type BadgeKind = "good" | "bad" | "warn" | "neutral";
 
 export type MemberType = "Student" | "Faculty";
@@ -17,6 +35,7 @@ export type StaffStatus = "Active" | "Disabled";
 export interface Book {
   id: number;
   barcode: string;
+  accessionNo: string | null;
   title: string;
   author: string;
   subject: string;
@@ -31,6 +50,7 @@ export interface Book {
 }
 
 export interface BookInput {
+  accessionNo?: string | null;
   title: string;
   author: string;
   subject: string;
@@ -63,6 +83,26 @@ export interface MemberInput {
   gradeOrDept?: string | null;
   email?: string | null;
   status?: MemberStatus;
+}
+
+export interface MemberHistoryEntry {
+  id: number;
+  bookTitle: string;
+  bookBarcode: string;
+  borrowedAt: string;
+  dueAt: string;
+  returnedAt: string | null;
+  status: LoanStatus;
+  daysLate: number;
+}
+
+export interface MemberHistory {
+  member: Member;
+  history: MemberHistoryEntry[];
+  totalLoans: number;
+  openLoans: number;
+  unpaidFines: number;
+  paidFines: number;
 }
 
 export interface Loan {
