@@ -2,6 +2,14 @@ import "dotenv/config";
 import { db, queryClient } from "./index.ts";
 import { books, members, loans, reservations, fines, staffUsers, settings, lookups } from "./schema.ts";
 import { MS_PER_DAY } from "../lib/domain.ts";
+import { hashPassword } from "../lib/auth.ts";
+
+/**
+ * The password every seeded staff account gets. Demo data only — this is a
+ * public sample database, not a credential worth protecting. Change it (or
+ * set real passwords) before pointing this at anything that matters.
+ */
+const DEMO_PASSWORD = "lumen-demo-2024";
 
 const now = new Date();
 const daysFromNow = (d: number) => new Date(now.getTime() + d * MS_PER_DAY);
@@ -179,14 +187,23 @@ async function main() {
     ["Marcus Lee", "m.lee@lumenlibrary.org", "Assistant", "Active", -1],
     ["Sara Kim", "s.kim@lumenlibrary.org", "Librarian", "Disabled", -21],
   ];
+  // One shared demo password so a reviewer can sign in as each role and see
+  // what it can and cannot do. Hashed like any other, and hashed once rather
+  // than per row because scrypt is deliberately slow.
+  const demoHash = await hashPassword(DEMO_PASSWORD);
   await db.insert(staffUsers).values(
     staffDefs.map(([name, email, role, status, off]) => ({
-      name, email, role, status,
+      name,
+      email,
+      role,
+      status,
+      passwordHash: demoHash,
       lastActiveAt: daysFromNow(off),
     })),
   );
 
   console.log("✔ Seed complete.");
+  console.log(`  Sign in as daveen.dev@lumenlibrary.org / ${DEMO_PASSWORD} (Admin).`);
 }
 
 main()

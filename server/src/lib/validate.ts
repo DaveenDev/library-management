@@ -82,11 +82,35 @@ export const checkinSchema = z.object({
   bookBarcode: trimmed.pipe(z.string().min(1, "bookBarcode is required")),
 });
 
+/**
+ * Long enough to resist a dictionary attack, capped because scrypt hashes the
+ * whole input and an unbounded password is an easy way to burn server CPU.
+ */
+const password = z.string().min(10, "must be at least 10 characters").max(200);
+
 export const staffCreateSchema = z.object({
   name: trimmed.pipe(z.string().min(1, "name is required")),
-  email: z.string().email("must be a valid email"),
+  email: z
+    .string()
+    .email("must be a valid email")
+    .transform((s) => s.trim().toLowerCase()),
+  password: password.optional(),
   role: z.enum(["Admin", "Librarian", "Assistant"]).default("Assistant"),
   status: z.enum(["Active", "Disabled"]).default("Active"),
+});
+
+export const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, "email is required")
+    .transform((s) => s.trim().toLowerCase()),
+  // Deliberately not length-checked: a rejected short password would answer
+  // "is this the right password shape?" for free, and the stored hash decides.
+  password: z.string().min(1, "password is required"),
+});
+
+export const passwordChangeSchema = z.object({
+  password,
 });
 
 export const settingsSchema = z.object({

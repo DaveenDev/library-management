@@ -157,6 +157,60 @@ export interface StaffUser {
   createdAt: string;
 }
 
+// ---------- Access control ----------
+
+/**
+ * A single capability a route can require. Reading is open to any signed-in
+ * staff account; only the mutations below are gated.
+ *
+ * Roles map to permissions here, in shared code, so the server's middleware
+ * and the client's UI gating can never drift apart — a button the client
+ * hides is exactly a route the server refuses.
+ */
+export type Permission =
+  | "catalog:write"
+  | "members:write"
+  | "circulation:write"
+  | "fines:write"
+  | "settings:write"
+  | "users:manage";
+
+export const ROLE_PERMISSIONS: Record<StaffRole, readonly Permission[]> = {
+  Admin: [
+    "catalog:write",
+    "members:write",
+    "circulation:write",
+    "fines:write",
+    "settings:write",
+    "users:manage",
+  ],
+  Librarian: ["catalog:write", "members:write", "circulation:write", "fines:write"],
+  Assistant: ["circulation:write"],
+};
+
+export function roleCan(role: StaffRole, permission: Permission): boolean {
+  return ROLE_PERMISSIONS[role]?.includes(permission) ?? false;
+}
+
+/**
+ * The signed-in account, as returned by the auth endpoints. Deliberately
+ * narrower than `StaffUser` — a session response carries no password hash and
+ * no bookkeeping columns.
+ */
+export interface AuthUser {
+  id: number;
+  name: string;
+  email: string;
+  role: StaffRole;
+  /** Derived server-side so every avatar renders the same initials. */
+  initials: string;
+}
+
+export interface Session {
+  user: AuthUser;
+  permissions: Permission[];
+}
+
 export interface Settings {
   dailyFineRate: number;
   gracePeriodDays: number;

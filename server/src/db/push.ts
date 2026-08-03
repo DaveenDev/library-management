@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS staff_users (
   id serial PRIMARY KEY,
   name text NOT NULL,
   email text NOT NULL UNIQUE,
+  password_hash text,
   role varchar(16) NOT NULL DEFAULT 'Assistant',
   status varchar(16) NOT NULL DEFAULT 'Active',
   last_active_at timestamptz,
@@ -110,6 +111,17 @@ UPDATE books b
 SET accession_no = lpad(s.rn::text, 4, '0')
 FROM (SELECT id, row_number() OVER (ORDER BY id) AS rn FROM books WHERE accession_no IS NULL) s
 WHERE b.id = s.id AND b.accession_no IS NULL;
+
+-- Staff sign-in. Left nullable and unbackfilled on purpose: accounts that
+-- predate authentication have no password, and an account with no hash cannot
+-- sign in until an Admin sets one.
+ALTER TABLE staff_users ADD COLUMN IF NOT EXISTS password_hash text;
+
+-- Addresses are matched case-insensitively at sign-in, so two rows differing
+-- only in case would make one of them unreachable.
+UPDATE staff_users SET email = lower(email)
+WHERE email <> lower(email)
+  AND NOT EXISTS (SELECT 1 FROM staff_users o WHERE o.email = lower(staff_users.email));
 `;
 
 /**

@@ -5,7 +5,8 @@ import { settings, lookups } from "../db/schema.ts";
 import { ah, HttpError } from "../lib/http.ts";
 import { lookupValueSchema, parseBody, settingsSchema } from "../lib/validate.ts";
 import { getSettings } from "../lib/settings.ts";
-import type { LookupLists } from "@lumen/shared";
+import { requirePermission } from "../lib/auth.ts";
+import { roleCan, type LookupLists } from "@lumen/shared";
 
 export const settingsRouter = Router();
 
@@ -36,10 +37,24 @@ settingsRouter.get(
   }),
 );
 
+/**
+ * Theme and accent are appearance, not policy — every signed-in user changes
+ * them from the topbar. Only the fields that govern how the library charges
+ * and lends need `settings:write`.
+ */
+const APPEARANCE_FIELDS = new Set(["theme", "accent"]);
+
 settingsRouter.put(
   "/",
   ah(async (req, res) => {
     const b = parseBody(settingsSchema, req.body);
+    const touchesPolicy = Object.keys(b).some(
+      (k) => !APPEARANCE_FIELDS.has(k) && b[k as keyof typeof b] !== undefined,
+    );
+    if (touchesPolicy && !roleCan(req.user!.role, "settings:write")) {
+      throw new HttpError(403, `your role (${req.user!.role}) cannot change library policy`);
+    }
+
     const patch: Record<string, unknown> = {};
     // numeric(10,2) columns take strings, so money values are fixed to 2dp.
     if (b.dailyFineRate !== undefined) patch.dailyFineRate = b.dailyFineRate.toFixed(2);
@@ -58,6 +73,7 @@ settingsRouter.put(
 // lookups: add/remove a chip in a list
 settingsRouter.post(
   "/lookups/:kind",
+  requirePermission("settings:write"),
   ah(async (req, res) => {
     const kind = req.params.kind as Kind;
     if (!KINDS.includes(kind)) throw new HttpError(400, "invalid list kind");
@@ -69,6 +85,7 @@ settingsRouter.post(
 
 settingsRouter.delete(
   "/lookups/:kind/:value",
+  requirePermission("settings:write"),
   ah(async (req, res) => {
     const kind = req.params.kind as Kind;
     if (!KINDS.includes(kind)) throw new HttpError(400, "invalid list kind");
