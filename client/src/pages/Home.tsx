@@ -7,6 +7,7 @@ import { Icon } from "../icons.tsx";
 import { primaryBtn, inputStyle, ghostBtn } from "../theme.ts";
 import type { Book } from "@lumen/shared";
 import type { PageProps } from "../App.tsx";
+import { errorMessage } from "../lib/errors.ts";
 
 export function Home({ navigate }: PageProps) {
   const [query, setQuery] = useState("");
@@ -120,7 +121,7 @@ function BorrowModal({ book, onClose, onDone }: { book: Book; onClose: () => voi
     if (!memberCode.trim()) { toast("Enter a member ID", "bad"); return; }
     setSaving(true);
     try { await api.checkout({ bookId: book.id, memberCode: memberCode.trim() }); toast(`Checked out “${book.title}”`); onDone(); }
-    catch (e: any) { toast(e.message, "bad"); setSaving(false); }
+    catch (e) { toast(errorMessage(e), "bad"); setSaving(false); }
   };
   return (
     <Modal title="Borrow a Book" subtitle={book.title} width={460} onClose={onClose}

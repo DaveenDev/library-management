@@ -6,6 +6,7 @@ import { ReserveModal } from "../components/ReserveModal.tsx";
 import { Icon } from "../icons.tsx";
 import { thStyle, tdStyle, primaryBtn } from "../theme.ts";
 import type { Reservation } from "@lumen/shared";
+import { errorMessage } from "../lib/errors.ts";
 
 const fmt = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "2-digit" });
 
@@ -18,11 +19,11 @@ export function Reservations() {
 
   const fulfill = async (r: Reservation) => {
     try { await api.fulfillReservation(r.id); toast(`Fulfilled hold on “${r.bookTitle}”`); refresh(); }
-    catch (e: any) { toast(e.message, "bad"); }
+    catch (e) { toast(errorMessage(e), "bad"); }
   };
   const cancel = async (r: Reservation) => {
     try { await api.cancelReservation(r.id); toast(`Cancelled hold on “${r.bookTitle}”`); refresh(); }
-    catch (e: any) { toast(e.message, "bad"); }
+    catch (e) { toast(errorMessage(e), "bad"); }
   };
 
   const queueLabel = (r: Reservation) => (r.queuePosition <= 1 ? "—" : `${r.queuePosition}${r.queuePosition === 2 ? "nd" : r.queuePosition === 3 ? "rd" : "th"} in queue`);

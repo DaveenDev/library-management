@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import { useAsync } from "../hooks.ts";
 import { api } from "../api.ts";
 import { Card } from "../components/ui.tsx";

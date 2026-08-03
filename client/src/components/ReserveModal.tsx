@@ -5,6 +5,7 @@ import { Modal, Field, useToast } from "./ui.tsx";
 import { Icon } from "../icons.tsx";
 import { primaryBtn, inputStyle, ghostBtn } from "../theme.ts";
 import type { Book } from "@lumen/shared";
+import { errorMessage } from "../lib/errors.ts";
 
 /**
  * Places a hold. Pass a `book` when the caller already knows the title
@@ -36,8 +37,8 @@ export function ReserveModal({
       await api.createReservation({ bookId: chosenId, memberCode: memberCode.trim() });
       toast("Hold placed");
       onDone();
-    } catch (e: any) {
-      toast(e.message, "bad");
+    } catch (e) {
+      toast(errorMessage(e), "bad");
       setSaving(false);
     }
   };

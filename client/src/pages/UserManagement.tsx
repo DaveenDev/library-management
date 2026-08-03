@@ -6,6 +6,7 @@ import { Icon } from "../icons.tsx";
 import { thStyle, tdStyle, primaryBtn, inputStyle, iconBtn, ghostBtn } from "../theme.ts";
 import type { StaffUser, StaffRole } from "@lumen/shared";
 import { LIBRARY } from "../branding.ts";
+import { errorMessage } from "../lib/errors.ts";
 
 const ROLES: { name: string; perms: string[] }[] = [
   { name: "Admin", perms: ["Full system access", "Manage staff & settings", "All reports & exports"] },
@@ -34,7 +35,7 @@ export function UserManagement() {
   const del = async (u: StaffUser) => {
     if (!confirm(`Remove ${u.name}?`)) return;
     try { await api.deleteUser(u.id); toast(`Removed ${u.name}`); refresh(); }
-    catch (e: any) { toast(e.message, "bad"); }
+    catch (e) { toast(errorMessage(e), "bad"); }
   };
 
   return (
@@ -97,7 +98,7 @@ function UserModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => v
     if (!form.name || !form.email) { toast("Name and email are required", "bad"); return; }
     setSaving(true);
     try { await api.createUser(form); toast(`Added ${form.name}`); onSaved(); }
-    catch (e: any) { toast(e.message, "bad"); setSaving(false); }
+    catch (e) { toast(errorMessage(e), "bad"); setSaving(false); }
   };
   return (
     <Modal title="Add User" subtitle="Create a staff account" width={520} onClose={onClose}

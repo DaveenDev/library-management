@@ -3,8 +3,9 @@ import { api } from "../api.ts";
 import { usePaginated, paginationProps } from "../hooks.ts";
 import { Card, Badge, statusKind, Pagination, useToast } from "../components/ui.tsx";
 import { Icon } from "../icons.tsx";
-import { thStyle, tdStyle, primaryBtnWide, primaryBtn } from "../theme.ts";
+import { thStyle, tdStyle, primaryBtnWide } from "../theme.ts";
 import { money, type Loan } from "@lumen/shared";
+import { errorMessage } from "../lib/errors.ts";
 
 const scanInput = { border: "none", background: "transparent", fontSize: "14px", flex: 1, color: "#2a2620", fontFamily: "'IBM Plex Mono',monospace" } as const;
 const scanBox = { display: "flex", alignItems: "center", gap: "10px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", padding: "10px 12px" } as const;
@@ -37,7 +38,7 @@ export function Circulation() {
       toast(`Checked out “${loan.bookTitle}” to ${loan.memberName}`);
       setBookBarcode(""); setMemberCode(""); refresh();
       bookRef.current?.focus();
-    } catch (e: any) { toast(e.message, "bad"); }
+    } catch (e) { toast(errorMessage(e), "bad"); }
   };
   const checkin = async () => {
     if (!returnBarcode.trim()) { returnRef.current?.focus(); return; }
@@ -46,7 +47,7 @@ export function Circulation() {
       toast(r.amount > 0 ? `Returned · fine ${money(r.amount)} (${r.days} days late)` : "Returned — no fine");
       setReturnBarcode(""); refresh();
       returnRef.current?.focus();
-    } catch (e: any) { toast(e.message, "bad"); }
+    } catch (e) { toast(errorMessage(e), "bad"); }
   };
 
   // Enter on the book field jumps to the member field unless it is already
@@ -70,11 +71,11 @@ export function Circulation() {
   };
   const renew = async (l: Loan) => {
     try { const nl = await api.renewLoan(l.id); toast(`Renewed — due ${fmt(nl.dueAt)}`); refresh(); }
-    catch (e: any) { toast(e.message, "bad"); }
+    catch (e) { toast(errorMessage(e), "bad"); }
   };
   const ret = async (l: Loan) => {
     try { const r = await api.returnLoan(l.id); toast(r.amount > 0 ? `Returned · fine ${money(r.amount)}` : "Returned — no fine"); refresh(); }
-    catch (e: any) { toast(e.message, "bad"); }
+    catch (e) { toast(errorMessage(e), "bad"); }
   };
 
   return (

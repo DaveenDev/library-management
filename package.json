@@ -15,9 +15,21 @@
     "db:push": "npm run db:push --workspace server",
     "db:seed": "npm run db:seed --workspace server",
     "setup": "npm run db:push && npm run db:seed",
-    "build": "npm run build --workspace client"
+    "build": "npm run build --workspace client",
+    "test": "npm run test --workspace server",
+    "typecheck": "tsc --noEmit -p server && tsc -b client",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "@eslint/js": "^10.0.1",
+    "concurrently": "^9.1.0",
+    "eslint": "^10.8.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "prettier": "^3.9.6",
+    "typescript-eslint": "^8.65.0"
   }
 }

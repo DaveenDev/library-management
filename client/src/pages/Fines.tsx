@@ -4,6 +4,7 @@ import { usePaginated, paginationProps, useAsync } from "../hooks.ts";
 import { Card, Badge, statusKind, Pagination, useToast } from "../components/ui.tsx";
 import { thStyle, tdStyle } from "../theme.ts";
 import { money, type Fine } from "@lumen/shared";
+import { errorMessage } from "../lib/errors.ts";
 
 export function Fines() {
   const toast = useToast();
@@ -15,12 +16,12 @@ export function Fines() {
 
   const collect = async (f: Fine) => {
     try { await api.collectFine(f.id); toast(`Collected ${money(f.amount)} from ${f.memberName}`); refresh(); refreshSummary(); }
-    catch (e: any) { toast(e.message, "bad"); }
+    catch (e) { toast(errorMessage(e), "bad"); }
   };
   const waive = async (f: Fine) => {
     if (!confirm(`Waive the ${money(f.amount)} fine for ${f.memberName}?`)) return;
     try { await api.waiveFine(f.id); toast(`Waived ${money(f.amount)} for ${f.memberName}`); refresh(); refreshSummary(); }
-    catch (e: any) { toast(e.message, "bad"); }
+    catch (e) { toast(errorMessage(e), "bad"); }
   };
 
   const tiles = [

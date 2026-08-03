@@ -5,6 +5,7 @@ import { Card, Field, useToast } from "../components/ui.tsx";
 import { Icon } from "../icons.tsx";
 import { primaryBtn, inputStyle } from "../theme.ts";
 import { CURRENCY_SYMBOL, type LookupLists } from "@lumen/shared";
+import { errorMessage } from "../lib/errors.ts";
 
 export function Settings() {
   const toast = useToast();
@@ -31,7 +32,7 @@ export function Settings() {
         emailReminders: form.emailReminders, loanPeriodDays: Number(form.loanPeriodDays),
       });
       toast("Fine settings saved");
-    } catch (e: any) { toast(e.message, "bad"); }
+    } catch (e) { toast(errorMessage(e), "bad"); }
   };
 
   if (loading) return <div style={{ color: "#8a8069" }}>Loading settings…</div>;
@@ -79,12 +80,12 @@ function ChipCard({ title, note, kind, values, onChange, placeholder, mono }: {
   const add = async () => {
     const v = input.trim();
     if (!v) return;
-    try { const lists = await api.addLookup(kind, v); onChange((lists as any)[pluralOf(kind)]); setInput(""); }
-    catch (e: any) { toast(e.message, "bad"); }
+    try { const lists = await api.addLookup(kind, v); onChange(lists[pluralOf(kind)]); setInput(""); }
+    catch (e) { toast(errorMessage(e), "bad"); }
   };
   const remove = async (val: string) => {
-    try { const lists = await api.removeLookup(kind, val); onChange((lists as any)[pluralOf(kind)]); }
-    catch (e: any) { toast(e.message, "bad"); }
+    try { const lists = await api.removeLookup(kind, val); onChange(lists[pluralOf(kind)]); }
+    catch (e) { toast(errorMessage(e), "bad"); }
   };
 
   return (

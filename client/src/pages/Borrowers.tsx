@@ -5,6 +5,7 @@ import { Card, Badge, statusKind, Pagination, Modal, Field, useToast } from "../
 import { Icon } from "../icons.tsx";
 import { thStyle, tdStyle, tdMonoStyle, primaryBtn, inputStyle, iconBtn, ghostBtn } from "../theme.ts";
 import { money, type Member, type MemberInput, type MemberType } from "@lumen/shared";
+import { errorMessage } from "../lib/errors.ts";
 
 export function Borrowers() {
   const toast = useToast();
@@ -20,7 +21,7 @@ export function Borrowers() {
   const del = async (m: Member) => {
     if (!confirm(`Delete member ${m.name}?`)) return;
     try { await api.deleteMember(m.id); toast(`Deleted ${m.name}`); refresh(); }
-    catch (e: any) { toast(e.message, "bad"); }
+    catch (e) { toast(errorMessage(e), "bad"); }
   };
 
   return (
@@ -146,7 +147,7 @@ function MemberModal({ member, onClose, onSaved }: { member: Member | null; onCl
       if (member) { await api.updateMember(member.id, form); toast(`Updated ${form.name}`); }
       else { await api.createMember(form); toast(`Registered ${form.name}`); }
       onSaved();
-    } catch (e: any) { toast(e.message, "bad"); setSaving(false); }
+    } catch (e) { toast(errorMessage(e), "bad"); setSaving(false); }
   };
 
   const grades = settings?.lists.grades ?? [];

@@ -36,27 +36,34 @@ export const ACCENTS = [
 
 export const DEFAULT_ACCENT = "#3d6b53";
 
-export function themeVars(themeKey: ThemeKey, accent: string): CSSProperties {
+/**
+ * React's CSSProperties has no index signature for custom properties, so a
+ * style object carrying `--*` vars needs this widened type rather than a
+ * cast at every single line.
+ */
+export type CssVars = CSSProperties & Record<`--${string}`, string>;
+
+export function themeVars(themeKey: ThemeKey, accent: string): CssVars {
   const t = THEMES[themeKey] ?? THEMES.parchment;
   const accentSoft = `color-mix(in srgb, ${accent} 16%, white)`;
   return {
     background: t.bgPage,
     color: t.ink,
-    // CSS custom properties
-    ["--bg-page" as any]: t.bgPage,
-    ["--bg-sidebar" as any]: t.bgSidebar,
-    ["--border-sidebar" as any]: t.borderSidebar,
-    ["--bg-card" as any]: t.bgCard,
-    ["--border-card" as any]: t.borderCard,
-    ["--border-input" as any]: t.borderInput,
-    ["--bg-input" as any]: t.bgInput,
-    ["--bg-soft" as any]: t.bgSoft,
-    ["--bg-hover" as any]: t.bgHover,
-    ["--bg-active" as any]: t.bgActive,
-    ["--bg-rowhover" as any]: t.bgRowHover,
-    ["--border-row" as any]: t.borderRow,
-    ["--accent" as any]: accent,
-    ["--accent-soft" as any]: accentSoft,
+    // CSS custom properties consumed via var(--x) throughout the app
+    "--bg-page": t.bgPage,
+    "--bg-sidebar": t.bgSidebar,
+    "--border-sidebar": t.borderSidebar,
+    "--bg-card": t.bgCard,
+    "--border-card": t.borderCard,
+    "--border-input": t.borderInput,
+    "--bg-input": t.bgInput,
+    "--bg-soft": t.bgSoft,
+    "--bg-hover": t.bgHover,
+    "--bg-active": t.bgActive,
+    "--bg-rowhover": t.bgRowHover,
+    "--border-row": t.borderRow,
+    "--accent": accent,
+    "--accent-soft": accentSoft,
   };
 }
 

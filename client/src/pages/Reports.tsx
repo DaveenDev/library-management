@@ -131,7 +131,7 @@ export function Reports() {
     });
 
     if (data?.footer) {
-      const endY = (doc as any).lastAutoTable?.finalY ?? 32;
+      const endY = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 32;
       doc.setFontSize(9.5);
       doc.setTextColor(29);
       doc.setFont("helvetica", "bold");

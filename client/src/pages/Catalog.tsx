@@ -8,8 +8,7 @@ import { Icon } from "../icons.tsx";
 import { thStyle, tdStyle, tdMonoStyle, primaryBtn, inputStyle, iconBtn, ghostBtn } from "../theme.ts";
 import { useAsync } from "../hooks.ts";
 import type { Book, BookInput } from "@lumen/shared";
-
-const SUBJECTS = ["All", "Fiction", "Non-Fiction", "Science", "History", "Technology", "Self-Help", "Biography", "Classic", "Memoir", "Science Fiction", "Reference"];
+import { errorMessage } from "../lib/errors.ts";
 
 export function Catalog({ initialQuery }: { initialQuery?: { text: string; nonce: number } }) {
   const toast = useToast();
@@ -42,7 +41,7 @@ export function Catalog({ initialQuery }: { initialQuery?: { text: string; nonce
   const del = async (b: Book) => {
     if (!confirm(`Delete “${b.title}”?`)) return;
     try { await api.deleteBook(b.id); toast(`Deleted ${b.title}`); refresh(); }
-    catch (e: any) { toast(e.message, "bad"); }
+    catch (e) { toast(errorMessage(e), "bad"); }
   };
 
   return (
@@ -139,7 +138,7 @@ function BookModal({ book, onClose, onSaved }: { book: Book | null; onClose: () 
       if (book) { await api.updateBook(book.id, form); toast(`Updated ${form.title}`); }
       else { await api.createBook(form); toast(`Added ${form.title}`); }
       onSaved();
-    } catch (e: any) { toast(e.message, "bad"); setSaving(false); }
+    } catch (e) { toast(errorMessage(e), "bad"); setSaving(false); }
   };
 
   const subjects = settings?.lists.subjects ?? ["Fiction"];
