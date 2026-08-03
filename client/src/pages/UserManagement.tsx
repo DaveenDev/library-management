@@ -5,6 +5,7 @@ import { Card, Badge, statusKind, Pagination, Modal, Field, useToast } from "../
 import { Icon } from "../icons.tsx";
 import { thStyle, tdStyle, primaryBtn, inputStyle, iconBtn, ghostBtn } from "../theme.ts";
 import type { StaffUser, StaffRole } from "@lumen/shared";
+import { LIBRARY } from "../branding.ts";
 
 const ROLES: { name: string; perms: string[] }[] = [
   { name: "Admin", perms: ["Full system access", "Manage staff & settings", "All reports & exports"] },
@@ -105,7 +106,7 @@ function UserModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => v
         <button onClick={save} disabled={saving} style={primaryBtn}><Icon name="check" color="var(--bg-card,#fbf7ee)" size={16} /><span>Create User</span></button>
       </>}>
       <Field label="Full Name *"><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Marcus Lee" style={inputStyle} /></Field>
-      <Field label="Email *"><input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="name@lumenlibrary.org" style={inputStyle} /></Field>
+      <Field label="Email *"><input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={`name@${LIBRARY.emailDomain}`} style={inputStyle} /></Field>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
         <Field label="Role"><select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as StaffRole })} style={inputStyle}><option>Admin</option><option>Librarian</option><option>Assistant</option></select></Field>
         <Field label="Status"><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as "Active" | "Disabled" })} style={inputStyle}><option>Active</option><option>Disabled</option></select></Field>

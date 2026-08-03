@@ -174,7 +174,7 @@ async function main() {
 
   console.log("Seeding staff users…");
   const staffDefs: [string, string, string, string, number][] = [
-    ["Bill Higham", "bill.higham@lumenlibrary.org", "Admin", "Active", 0],
+    ["Daveen Dev", "daveen.dev@lumenlibrary.org", "Admin", "Active", 0],
     ["Dr. Elena Rossi", "e.rossi@lumenlibrary.org", "Librarian", "Active", -1],
     ["Marcus Lee", "m.lee@lumenlibrary.org", "Assistant", "Active", -1],
     ["Sara Kim", "s.kim@lumenlibrary.org", "Librarian", "Disabled", -21],

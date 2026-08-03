@@ -3,6 +3,7 @@ import { api } from "../api.ts";
 import { useAsync } from "../hooks.ts";
 import { Icon } from "../icons.tsx";
 import { CURRENCY_CODE, parseMoney } from "@lumen/shared";
+import { LIBRARY } from "../branding.ts";
 
 const TABS: [string, string][] = [
   ["overdue", "Overdue Report"],
@@ -93,11 +94,11 @@ export function Reports() {
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(15);
-    doc.text("Lumen Library", 14, 16);
+    doc.text(LIBRARY.name, 14, 16);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(105);
-    doc.text("128 Alder Street · lumenlibrary.org", 14, 21);
+    doc.text(LIBRARY.contactLine, 14, 21);
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
@@ -124,7 +125,7 @@ export function Reports() {
         const page = doc.getNumberOfPages();
         doc.setFontSize(8);
         doc.setTextColor(150);
-        doc.text("Lumen Library System", 14, doc.internal.pageSize.getHeight() - 8);
+        doc.text(LIBRARY.footerName, 14, doc.internal.pageSize.getHeight() - 8);
         doc.text(`Page ${page}`, width - 14, doc.internal.pageSize.getHeight() - 8, { align: "right" });
       },
     });
@@ -182,8 +183,8 @@ export function Reports() {
       <div className="lm-print-area" style={{ background: "#ffffff", maxWidth: "880px", width: "100%", margin: "0 auto", borderRadius: "4px", boxShadow: "0 1px 3px rgba(30,26,20,.14), 0 14px 44px rgba(30,26,20,.13)", padding: "52px 58px", color: "#1d1a15" }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "20px", borderBottom: "2.5px solid #1d1a15", paddingBottom: "18px" }}>
           <div>
-            <div style={{ fontFamily: "Spectral,serif", fontSize: "21px", fontWeight: 700 }}>Lumen Library</div>
-            <div style={{ fontSize: "12px", color: "#6b655a", marginTop: "3px" }}>128 Alder Street · lumenlibrary.org</div>
+            <div style={{ fontFamily: "Spectral,serif", fontSize: "21px", fontWeight: 700 }}>{LIBRARY.name}</div>
+            <div style={{ fontSize: "12px", color: "#6b655a", marginTop: "3px" }}>{LIBRARY.contactLine}</div>
           </div>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontFamily: "Spectral,serif", fontSize: "16px", fontWeight: 600 }}>{title}</div>
@@ -208,7 +209,7 @@ export function Reports() {
         </div>
 
         <div style={{ marginTop: "40px", paddingTop: "14px", borderTop: "1px solid #d9d3c6", display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#9a9284" }}>
-          <span>Lumen Library System</span>
+          <span>{LIBRARY.footerName}</span>
           <span>Page 1 of 1</span>
         </div>
       </div>

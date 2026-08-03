@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { Icon, type IconName } from "../icons.tsx";
 import type { Section } from "../nav.ts";
 import { NAV_ITEMS, SETTINGS_ITEMS } from "../nav.ts";
+import { CURRENT_USER } from "../branding.ts";
 
 export function Sidebar({
   section, accent, onNavigate,
@@ -57,10 +58,10 @@ export function Sidebar({
       </nav>
 
       <div style={{ marginTop: "14px", flex: "none", display: "flex", alignItems: "center", gap: "11px", padding: "12px", background: "var(--bg-soft, #f3edda)", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "11px" }}>
-        <div style={avatarStyle}>BH</div>
+        <div style={avatarStyle}>{CURRENT_USER.initials}</div>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: "13.5px", fontWeight: 600, color: "#2a2620", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Bill Higham</div>
-          <div style={{ fontSize: "11.5px", color: "#8a8069" }}>Head Librarian</div>
+          <div style={{ fontSize: "13.5px", fontWeight: 600, color: "#2a2620", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{CURRENT_USER.name}</div>
+          <div style={{ fontSize: "11.5px", color: "#8a8069" }}>{CURRENT_USER.role}</div>
         </div>
       </div>
     </aside>

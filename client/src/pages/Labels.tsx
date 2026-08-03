@@ -5,6 +5,7 @@ import { Card } from "../components/ui.tsx";
 import { Barcode, QrCode } from "../components/Barcode.tsx";
 import { Icon } from "../icons.tsx";
 import { primaryBtnWide, inputStyle, labelStyle } from "../theme.ts";
+import { LIBRARY } from "../branding.ts";
 
 type Source = "books" | "borrowers";
 type LabelType = "spine" | "qr";
@@ -168,7 +169,7 @@ function PocketLabel({ item }: { item: LabelData }) {
       <div style={{ fontFamily: "Spectral,serif", fontSize: "12.5px", fontWeight: 600, textAlign: "center", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>
         {item.primary}
       </div>
-      <div style={{ fontSize: "10px", color: "#6f6653", margin: "2px 0 9px" }}>Lumen Library</div>
+      <div style={{ fontSize: "10px", color: "#6f6653", margin: "2px 0 9px" }}>{LIBRARY.name}</div>
       <QrCode value={item.code} size={88} />
       <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10px", letterSpacing: ".12em", marginTop: "8px" }}>
         {item.code}
