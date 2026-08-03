@@ -1,8 +1,7 @@
-# Handoff — remaining portfolio-readiness work
+# Handoff — portfolio-readiness work
 
-Context for an agent picking this repo up fresh. Everything below was
-identified in an audit of the app as a portfolio piece; the first three items
-are done, the rest are not.
+Context for an agent picking this repo up fresh. Everything the previous
+handoff listed is now done; what follows records how, and what is left.
 
 ## Start here
 
@@ -13,12 +12,16 @@ npm run setup                    # schema + demo data
 npm run dev                      # API :4000, client :5173
 ```
 
-Verification gates — **all four must stay green**:
+Sign in as `daveen.dev@lumenlibrary.org` / `lumen-demo-2024` (Admin). The
+other seeded accounts, and what each role can do, are in the README.
+
+Verification gates — **all four must stay green**, and CI runs them on every
+push and PR:
 
 ```bash
 npm run typecheck   # server tsc --noEmit + client tsc -b
-npm run lint        # 0 errors (6 known warnings, see below)
-npm test            # 59 tests
+npm run lint        # 0 errors, 0 warnings
+npm test            # 87 tests
 npm run build       # client production build
 ```
 
@@ -31,68 +34,73 @@ please keep it that way.
 
 - **Concurrency correctness.** Checkout/return/renew and hold placement are
   transactional with atomic guards. Regression tests exist for both races in
-  `server/tests/circulation.test.ts`. Before the fix, 5 concurrent checkouts
-  of a 1-copy book all succeeded.
+  `server/tests/circulation.test.ts`.
 - **Input validation.** Zod schemas in `server/src/lib/validate.ts`, applied to
   every route. `parseId()` rejects NaN/negative ids. Postgres constraint codes
   map to 409 rather than 500.
-- **Tests + lint/format.** Vitest (59 tests), ESLint flat config, Prettier.
+- **Tests + lint/format.** Vitest (87 tests), ESLint flat config, Prettier.
+- **CI.** `.github/workflows/ci.yml` runs all four gates on Node 20 and 22
+  against a `postgres:16` service container.
+- **Authentication and roles.** Covered below.
+- **Accessibility.** aria-labels on every icon-only button, `Field` wires
+  label/control ids for all 29 form fields, toasts are a live region, `Modal`
+  traps focus, closes on Escape and restores focus to its trigger.
+- **Responsive layout.** Off-canvas sidebar below 900px, collapsing grids,
+  fluid search boxes. Verified at 390 / 820 / 1400px with no horizontal
+  overflow on any screen.
+- **The set-state-in-effect warnings.** All six removed by deriving state or
+  keying the component on loaded data; the rule is back to `error`.
 
-## Remaining, in priority order
+## How authentication works
 
-### 1. GitHub Actions CI — not started
+Read this before touching a route or adding a screen.
 
-No `.github/workflows` exists. Add one running the four gates above on push
-and PR. Needs a Postgres service container; set `TEST_DATABASE_URL` to point
-at it. Suggested matrix: Node 20 and 22.
+- Passwords are scrypt hashes in `staff_users.password_hash`. The column is
+  nullable: an account with no hash simply cannot sign in until an Admin sets
+  a password.
+- Sign-in returns a signed JWT in an **httpOnly** cookie. `AUTH_SECRET` signs
+  it and is mandatory in production; in development a random per-process key
+  is generated, so sessions end when the server restarts. That is deliberate.
+- `requireAuth` is mounted on `/api` as a whole in `server/src/app.ts`, not per
+  router, so **a new router is protected by default**. It re-reads the staff
+  row on every request rather than trusting the token, so disabling an account
+  takes effect immediately.
+- Roles map to permissions in `shared/types.ts` (`ROLE_PERMISSIONS`), imported
+  by both sides. **Add a permission there first**, then gate the route and the
+  UI from the same table — that shared source is what stops the client
+  offering something the server refuses.
+- Mutations are gated where the router is mounted, via `writesRequire(...)`.
+  Reads are open to any signed-in account. Theme and accent are exempt from
+  `settings:write`, because the topbar theme picker writes through the
+  settings route and must work for every role.
 
-### 2. Accessibility — not started
+## Remaining
 
-Currently **0** `aria-*` attributes, **0** `htmlFor` associations, **0** `alt`
-attributes across 54 buttons.
+### 1. Password self-service — not started
 
-- Icon-only buttons (Edit/Delete/Reserve in Catalog, history/edit/delete in
-  Borrowers) have no accessible name. They already carry `title`; add
-  `aria-label` too — `title` alone is not reliably announced.
-- `Field` in `client/src/components/ui.tsx` renders a `<label>` with no
-  `htmlFor`. Wire an id through so labels associate with their inputs; this
-  fixes every form at once.
-- Toasts (`ToastProvider`, same file) need `role="status"` / `aria-live="polite"`
-  so they're announced.
-- `Modal` (same file) does not trap focus, does not close on Escape, and does
-  not restore focus to the trigger on close.
+An Admin can set anyone's password from User Management, but nobody can
+change their own, and there is no reset flow. A "change my password" endpoint
+taking the current password would be the obvious next step; a reset by email
+needs mail sending, which the app does not do yet (`emailReminders` in
+settings is likewise unimplemented).
 
-### 3. Responsive layout — not started
+### 2. Session lifetime — worth a decision
 
-Effectively desktop-only: **1** media query (print), 26 hardcoded pixel widths.
+Sessions last 8 hours with no refresh, so a librarian on a long shift is
+signed out mid-day. Either lengthen it or issue a fresh cookie on activity.
 
-- `Sidebar` is fixed-width and always visible — needs an off-canvas/collapsible
-  mode below ~900px.
-- Several `gridTemplateColumns: "1fr 1fr"` and `"repeat(4,1fr)"` need to
-  collapse to one column on narrow screens (Circulation, Labels, the borrower
-  history modal, Dashboard's two-column rows).
-- Search inputs use fixed `width: "340px"` / `"400px"`; make them fluid.
-- Tables already sit in `overflow-x: auto` wrappers, so they mostly work — verify
-  rather than rewrite.
+### 3. Prettier is not clean — 37 files
 
-### 4. Authentication — not started, largest item
+`npm run format:check` fails on files that predate the Prettier config. It is
+deliberately **not** a CI step, because reformatting them belongs in its own
+commit rather than buried in an unrelated one. Run `npm run format`, commit
+the result alone, then add `format:check` to `.github/workflows/ci.yml`.
 
-There is **no auth at all**: `app.use(cors())` is fully open and no route checks
-identity. The User Management screen shows roles and permissions that are purely
-decorative. `CURRENT_USER` in `client/src/branding.ts` is a hardcoded
-placeholder standing in for a session.
+### 4. drizzle-orm advisory
 
-This is the single biggest gap between "impressive demo" and "real system".
-Scope it deliberately — session or JWT, password hashing, route middleware,
-and making the existing Admin/Librarian/Assistant roles actually gate actions.
-
-### 5. Known lint warnings — 6, deliberate
-
-`react-hooks/set-state-in-effect` is set to `warn` in `eslint.config.js` with an
-explanatory comment. Several pages (Settings, Catalog, Borrowers) seed form
-state from fetched data inside an effect. The correct fix is deriving the state
-or keying the component on the loaded data, not adding a dependency. If you fix
-them, promote the rule back to `error`.
+The project pins `drizzle-orm` 0.38.x, affected by
+[GHSA-gpj5-g38j-94v9](https://github.com/advisories/GHSA-gpj5-g38j-94v9).
+Upgrading to 0.45.2+ is a breaking change and has not been done.
 
 ## Conventions worth matching
 
@@ -106,6 +114,15 @@ them, promote the rule back to `error`.
 - `server/src/db/push.ts` only runs `CREATE TABLE IF NOT EXISTS` for tables —
   **new columns need an entry in its `MIGRATIONS` block**, or they'll be
   silently skipped on an existing database while it still prints "up to date".
+- Zod: build update schemas from a default-free field map, **not** from
+  `createSchema.partial()`. `.partial()` keeps `.default()`, so an omitted
+  field arrives as the default and the PATCH handlers write it. That silently
+  un-suspended members before it was fixed.
+- The app is styled with inline `style` objects, which cannot express a media
+  query, so anything responsive is a class in `client/src/index.css`. An
+  inline value beats a class rule — if a media query needs to change a
+  property, that property has to move out of the element and into the
+  stylesheet.
 
 ## Deliberately out of scope
 

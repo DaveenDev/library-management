@@ -46,6 +46,7 @@ in an npm-workspaces monorepo.
 | **Exports** | Every report exports to **Excel (.xlsx)** and **PDF**, plus a print-ready letterhead sheet |
 | **Labels** | Genuine scannable **Code 128 barcodes** and **QR codes** for both book spines and borrower ID cards, with quantity-driven print sheets |
 | **Settings** | Fine rules, loan period, and editable shelf / subject / grade / section lists |
+| **Staff accounts** | Password sign-in with three roles — Admin, Librarian, Assistant — enforced on the server, not just displayed. See [Security](#security) |
 | **Appearance** | Three themes and four accent colours, persisted server-side |
 
 ### Barcode scanning
