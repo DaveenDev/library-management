@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app.ts";
 import { queryClient } from "../src/db/index.ts";
-import { makeBook, makeMember, resetDb } from "./helpers/fixtures.ts";
+import { makeBook, makeMember, makeStaff, resetDb } from "./helpers/fixtures.ts";
 import { asAdmin } from "./helpers/auth.ts";
 
 const app = createApp();
@@ -124,5 +124,39 @@ describe("delete guards", () => {
 
     const res = await agent.delete(`/api/members/${member.id}`);
     expect(res.status).toBe(409);
+  });
+});
+
+describe("a partial update leaves untouched fields alone", () => {
+  it("does not reset a book's copies or subject when only the title is sent", async () => {
+    const book = await makeBook({ subject: "History", totalCopies: 4, availableCopies: 4 });
+
+    const res = await agent.patch(`/api/books/${book.id}`).send({ title: "Renamed" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.title).toBe("Renamed");
+    expect(res.body.subject).toBe("History");
+    expect(res.body.totalCopies).toBe(4);
+    expect(res.body.availableCopies).toBe(4);
+  });
+
+  it("does not un-suspend a member when only the name is sent", async () => {
+    const member = await makeMember({ status: "Suspended", type: "Faculty" });
+
+    const res = await agent.patch(`/api/members/${member.id}`).send({ name: "Renamed" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("Suspended");
+    expect(res.body.type).toBe("Faculty");
+  });
+
+  it("does not demote a staff account when only the name is sent", async () => {
+    const staff = await makeStaff({ role: "Librarian", status: "Disabled" });
+
+    const res = await agent.patch(`/api/users/${staff.id}`).send({ name: "Renamed" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.role).toBe("Librarian");
+    expect(res.body.status).toBe("Disabled");
   });
 });

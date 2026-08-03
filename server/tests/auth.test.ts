@@ -314,5 +314,8 @@ describe("staff account management", () => {
 
     const remove = await agent.delete("/api/users/1");
     expect(remove.status).toBe(409);
+
+    // Renaming yourself is still fine — it is not a way to lose access.
+    expect((await agent.patch("/api/users/1").send({ name: "Renamed" })).status).toBe(200);
   });
 });

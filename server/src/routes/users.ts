@@ -4,7 +4,7 @@ import { db } from "../db/index.ts";
 import { staffUsers } from "../db/schema.ts";
 import { ah, HttpError, pageParams } from "../lib/http.ts";
 import { hashPassword } from "../lib/auth.ts";
-import { parseBody, parseId, staffCreateSchema } from "../lib/validate.ts";
+import { parseBody, parseId, staffCreateSchema, staffUpdateSchema } from "../lib/validate.ts";
 
 export const usersRouter = Router();
 
@@ -66,7 +66,7 @@ usersRouter.patch(
   "/:id",
   ah(async (req, res) => {
     const id = parseId(req.params.id);
-    const b = parseBody(staffCreateSchema.partial(), req.body);
+    const b = parseBody(staffUpdateSchema, req.body);
     const patch: Record<string, unknown> = {};
     for (const f of ["name", "email", "role", "status"] as const)
       if (b[f] !== undefined) patch[f] = b[f];

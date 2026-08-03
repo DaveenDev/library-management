@@ -33,32 +33,57 @@ export function parseId(raw: string | undefined, label = "id"): number {
 const trimmed = z.string().transform((s) => s.trim());
 const optionalText = trimmed.nullish().transform((v) => (v ? v : null));
 
-export const bookCreateSchema = z.object({
+/**
+ * Update schemas are built from these field maps rather than from
+ * `createSchema.partial()`.
+ *
+ * `.partial()` makes a field optional but leaves its `.default()` in place, so
+ * an omitted field still arrives with the default value — and the PATCH
+ * handlers, which only skip keys that are `undefined`, would write it. A
+ * rename would silently reset a book to one copy or un-suspend a member. The
+ * defaults belong to creation only.
+ */
+const bookFields = {
   title: trimmed.pipe(z.string().min(1, "title is required")),
   author: trimmed.pipe(z.string().min(1, "author is required")),
-  subject: trimmed.default("Fiction"),
+  subject: trimmed,
   isbn: optionalText,
-  totalCopies: z.coerce.number().int().min(1).max(10_000).default(1),
+  totalCopies: z.coerce.number().int().min(1).max(10_000),
   shelf: optionalText,
   publicationYear: z.coerce.number().int().min(0).max(3000).nullish(),
   publisher: optionalText,
   description: optionalText,
   barcode: optionalText,
   accessionNo: optionalText,
+};
+
+export const bookCreateSchema = z.object({
+  ...bookFields,
+  subject: bookFields.subject.default("Fiction"),
+  totalCopies: bookFields.totalCopies.default(1),
 });
 
-export const bookUpdateSchema = bookCreateSchema.partial();
+export const bookUpdateSchema = z.object(bookFields).partial();
+
+const memberFields = {
+  name: trimmed.pipe(z.string().min(1, "name is required")),
+  type: z.enum(["Student", "Faculty"]),
+  gradeOrDept: optionalText,
+  email: z
+    .union([z.string().email(), z.literal(""), z.null()])
+    .optional()
+    .transform((v) => (v ? v : null)),
+  status: z.enum(["Active", "Suspended"]),
+  memberCode: optionalText,
+};
 
 export const memberCreateSchema = z.object({
-  name: trimmed.pipe(z.string().min(1, "name is required")),
-  type: z.enum(["Student", "Faculty"]).default("Student"),
-  gradeOrDept: optionalText,
-  email: z.union([z.string().email(), z.literal(""), z.null()]).optional().transform((v) => (v ? v : null)),
-  status: z.enum(["Active", "Suspended"]).default("Active"),
-  memberCode: optionalText,
+  ...memberFields,
+  type: memberFields.type.default("Student"),
+  status: memberFields.status.default("Active"),
 });
 
-export const memberUpdateSchema = memberCreateSchema.partial();
+export const memberUpdateSchema = z.object(memberFields).partial();
 
 /** Checkout/checkin/hold all accept either an id or a scanned code. */
 export const checkoutSchema = z
@@ -88,16 +113,25 @@ export const checkinSchema = z.object({
  */
 const password = z.string().min(10, "must be at least 10 characters").max(200);
 
-export const staffCreateSchema = z.object({
+const staffFields = {
   name: trimmed.pipe(z.string().min(1, "name is required")),
   email: z
     .string()
     .email("must be a valid email")
     .transform((s) => s.trim().toLowerCase()),
-  password: password.optional(),
-  role: z.enum(["Admin", "Librarian", "Assistant"]).default("Assistant"),
-  status: z.enum(["Active", "Disabled"]).default("Active"),
+  password: password,
+  role: z.enum(["Admin", "Librarian", "Assistant"]),
+  status: z.enum(["Active", "Disabled"]),
+};
+
+export const staffCreateSchema = z.object({
+  ...staffFields,
+  password: staffFields.password.optional(),
+  role: staffFields.role.default("Assistant"),
+  status: staffFields.status.default("Active"),
 });
+
+export const staffUpdateSchema = z.object(staffFields).partial();
 
 export const loginSchema = z.object({
   email: z
@@ -107,10 +141,6 @@ export const loginSchema = z.object({
   // Deliberately not length-checked: a rejected short password would answer
   // "is this the right password shape?" for free, and the stored hash decides.
   password: z.string().min(1, "password is required"),
-});
-
-export const passwordChangeSchema = z.object({
-  password,
 });
 
 export const settingsSchema = z.object({
