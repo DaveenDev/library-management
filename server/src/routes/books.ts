@@ -14,6 +14,16 @@ async function nextBarcode(): Promise<string> {
   return "LIB-" + String(n).padStart(6, "0");
 }
 
+// Accession numbers run as a plain ascending register (0001, 0002, …), which
+// is how school libraries number copies as they enter the collection.
+async function nextAccessionNo(): Promise<string> {
+  const [row] = await db
+    .select({ max: sql<string>`max(nullif(regexp_replace(${books.accessionNo}, '\\D', '', 'g'), ''))::int` })
+    .from(books);
+  const n = (Number(row?.max) || 0) + 1;
+  return String(n).padStart(4, "0");
+}
+
 booksRouter.get(
   "/",
   ah(async (req, res) => {
@@ -29,6 +39,8 @@ booksRouter.get(
           ilike(books.author, `%${q}%`),
           ilike(books.subject, `%${q}%`),
           ilike(books.barcode, `%${q}%`),
+          ilike(books.accessionNo, `%${q}%`),
+          ilike(books.isbn, `%${q}%`),
         ),
       );
     }
@@ -58,10 +70,12 @@ booksRouter.post(
     if (!b.title || !b.author) throw new HttpError(400, "title and author are required");
     const total = Math.max(1, Number(b.totalCopies) || 1);
     const barcode = b.barcode?.trim() || (await nextBarcode());
+    const accessionNo = b.accessionNo?.trim() || (await nextAccessionNo());
     const [row] = await db
       .insert(books)
       .values({
         barcode,
+        accessionNo,
         title: String(b.title).trim(),
         author: String(b.author).trim(),
         subject: b.subject || "Fiction",
@@ -87,7 +101,7 @@ booksRouter.patch(
     if (!existing) throw new HttpError(404, "book not found");
 
     const patch: Record<string, unknown> = {};
-    for (const f of ["title", "author", "subject", "isbn", "shelf", "publisher", "description"]) {
+    for (const f of ["title", "author", "subject", "isbn", "shelf", "publisher", "description", "accessionNo"]) {
       if (b[f] !== undefined) patch[f] = b[f];
     }
     if (b.publicationYear !== undefined) patch.publicationYear = b.publicationYear ? Number(b.publicationYear) : null;

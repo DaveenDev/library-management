@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { and, asc, desc, eq, gte, isNull, lte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
 import { db } from "../db/index.ts";
 import { books, members, loans, fines } from "../db/schema.ts";
 import { ah } from "../lib/http.ts";
 import { getSettings } from "../lib/settings.ts";
 import { computeFine } from "../lib/domain.ts";
+import { money } from "@lumen/shared";
 
 export const reportsRouter = Router();
 
@@ -40,9 +41,9 @@ reportsRouter.get(
       const items = rows.map((r) => {
         const { days, amount } = computeFine(new Date(r.dueAt), now, cfg);
         total += amount;
-        return { book: r.book, borrower: r.borrower, due: fmtShort(new Date(r.dueAt)), days: `${days} days`, amount: `$${amount.toFixed(2)}` };
+        return { book: r.book, borrower: r.borrower, due: fmtShort(new Date(r.dueAt)), days: `${days} days`, amount: money(amount) };
       });
-      return res.json({ items, footer: `Total outstanding: $${total.toFixed(2)} across ${items.length} loans` });
+      return res.json({ items, footer: `Total outstanding: ${money(total)} across ${items.length} loans` });
     }
 
     if (type === "fines") {
@@ -63,7 +64,7 @@ reportsRouter.get(
         book: r.book,
         days: r.days ? `${r.days} days` : "—",
         status: r.status,
-        amount: `$${r.amount.toFixed(2)}`,
+        amount: money(r.amount),
       }));
       const [{ unpaid, collected }] = await db
         .select({
@@ -71,12 +72,13 @@ reportsRouter.get(
           collected: sql<number>`coalesce(sum(${fines.amount}) filter (where ${fines.status}='Paid'),0)::float`,
         })
         .from(fines);
-      return res.json({ items, footer: `Unpaid: $${unpaid.toFixed(2)} · Collected: $${collected.toFixed(2)}` });
+      return res.json({ items, footer: `Unpaid: ${money(unpaid)} · Collected: ${money(collected)}` });
     }
 
     if (type === "books") {
       const rows = await db.select().from(books).orderBy(asc(books.title));
       const items = rows.map((b) => ({
+        accessionNo: b.accessionNo ?? "—",
         barcode: b.barcode,
         title: b.title,
         author: b.author,
@@ -132,6 +134,71 @@ reportsRouter.get(
       return res.json({ items, footer: `${pct}% of collection currently on shelf` });
     }
 
+    if (type === "transactions") {
+      // One loan yields up to two log lines — the check-out and the check-in —
+      // so a loan spanning the period boundary still shows the event that
+      // actually fell inside it.
+      const rows = await db
+        .select({
+          book: books.title,
+          borrower: members.name,
+          borrowedAt: loans.borrowedAt,
+          dueAt: loans.dueAt,
+          returnedAt: loans.returnedAt,
+        })
+        .from(loans)
+        .innerJoin(books, eq(loans.bookId, books.id))
+        .innerJoin(members, eq(loans.memberId, members.id))
+        .where(
+          or(
+            and(gte(loans.borrowedAt, from), lte(loans.borrowedAt, to)),
+            and(gte(loans.returnedAt, from), lte(loans.returnedAt, to)),
+          ),
+        );
+
+      const inRange = (d: Date) => d >= from && d <= to;
+      const events: { at: Date; date: string; action: string; book: string; borrower: string; due: string; status: string }[] = [];
+
+      for (const r of rows) {
+        const borrowed = new Date(r.borrowedAt);
+        const due = new Date(r.dueAt);
+        const returned = r.returnedAt ? new Date(r.returnedAt) : null;
+
+        if (inRange(borrowed)) {
+          events.push({
+            at: borrowed,
+            date: fmtShort(borrowed),
+            action: "Borrowed",
+            book: r.book,
+            borrower: r.borrower,
+            due: fmtShort(due),
+            status: returned ? "Returned" : now > due ? "Outstanding" : "Active",
+          });
+        }
+        if (returned && inRange(returned)) {
+          const late = Math.max(0, Math.floor((returned.getTime() - due.getTime()) / 86_400_000));
+          events.push({
+            at: returned,
+            date: fmtShort(returned),
+            action: "Returned",
+            book: r.book,
+            borrower: r.borrower,
+            due: fmtShort(due),
+            status: late > 0 ? `Late · ${late} day${late === 1 ? "" : "s"}` : "On time",
+          });
+        }
+      }
+
+      events.sort((a, b) => b.at.getTime() - a.at.getTime());
+      const borrowedCount = events.filter((e) => e.action === "Borrowed").length;
+      const returnedCount = events.filter((e) => e.action === "Returned").length;
+      const items = events.map(({ at: _at, ...rest }) => rest);
+      return res.json({
+        items,
+        footer: `${items.length} transactions · ${borrowedCount} borrowed · ${returnedCount} returned`,
+      });
+    }
+
     if (type === "members") {
       const rows = await db
         .select({
@@ -148,7 +215,7 @@ reportsRouter.get(
         id: r.id,
         loans: String(r.loans),
         overdue: String(r.overdue),
-        fines: `$${r.fines.toFixed(2)}`,
+        fines: money(r.fines),
       }));
       return res.json({ items, footer: `${items.length} active borrowers in period` });
     }

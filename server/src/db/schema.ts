@@ -12,6 +12,9 @@ import {
 export const books = pgTable("books", {
   id: serial("id").primaryKey(),
   barcode: varchar("barcode", { length: 32 }).notNull().unique(),
+  // Library accession number — the registry number assigned when the copy is
+  // added to the collection. Distinct from the scannable barcode.
+  accessionNo: varchar("accession_no", { length: 32 }).unique(),
   title: text("title").notNull(),
   author: text("author").notNull(),
   subject: text("subject").notNull().default("Fiction"),

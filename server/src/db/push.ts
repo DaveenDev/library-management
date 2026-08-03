@@ -7,6 +7,7 @@ const DDL = `
 CREATE TABLE IF NOT EXISTS books (
   id serial PRIMARY KEY,
   barcode varchar(32) NOT NULL UNIQUE,
+  accession_no varchar(32) UNIQUE,
   title text NOT NULL,
   author text NOT NULL,
   subject text NOT NULL DEFAULT 'Fiction',
@@ -90,9 +91,32 @@ CREATE TABLE IF NOT EXISTS lookups (
 );
 `;
 
+// The CREATE TABLE statements above only fire on a fresh database, so columns
+// added after the first release need an explicit idempotent migration here.
+const MIGRATIONS = `
+ALTER TABLE books ADD COLUMN IF NOT EXISTS accession_no varchar(32);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'books_accession_no_key'
+  ) THEN
+    ALTER TABLE books ADD CONSTRAINT books_accession_no_key UNIQUE (accession_no);
+  END IF;
+END $$;
+
+-- Backfill a register number for any copy catalogued before the column existed.
+UPDATE books b
+SET accession_no = lpad(s.rn::text, 4, '0')
+FROM (SELECT id, row_number() OVER (ORDER BY id) AS rn FROM books WHERE accession_no IS NULL) s
+WHERE b.id = s.id AND b.accession_no IS NULL;
+`;
+
 async function main() {
   console.log("Pushing schema…");
   await queryClient.unsafe(DDL);
+  console.log("Applying migrations…");
+  await queryClient.unsafe(MIGRATIONS);
   console.log("✔ Schema is up to date.");
 }
 

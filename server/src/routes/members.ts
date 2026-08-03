@@ -1,8 +1,10 @@
 import { Router } from "express";
-import { and, asc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "../db/index.ts";
-import { members, loans, fines } from "../db/schema.ts";
+import { members, loans, fines, books } from "../db/schema.ts";
 import { ah, HttpError, pageParams } from "../lib/http.ts";
+import { getSettings } from "../lib/settings.ts";
+import { daysLate, loanStatus } from "../lib/domain.ts";
 
 export const membersRouter = Router();
 
@@ -62,6 +64,64 @@ membersRouter.get(
       .offset(offset);
 
     res.json({ items, total: count, page, pageSize });
+  }),
+);
+
+// GET /api/members/:id/history — full borrowing record for one member.
+membersRouter.get(
+  "/:id/history",
+  ah(async (req, res) => {
+    const id = Number(req.params.id);
+    const cfg = await getSettings();
+    const [member] = await db.select().from(members).where(eq(members.id, id));
+    if (!member) throw new HttpError(404, "member not found");
+
+    const rows = await db
+      .select({
+        id: loans.id,
+        bookTitle: books.title,
+        bookBarcode: books.barcode,
+        borrowedAt: loans.borrowedAt,
+        dueAt: loans.dueAt,
+        returnedAt: loans.returnedAt,
+      })
+      .from(loans)
+      .innerJoin(books, eq(loans.bookId, books.id))
+      .where(eq(loans.memberId, id))
+      .orderBy(desc(loans.borrowedAt));
+
+    const now = new Date();
+    const history = rows.map((r) => {
+      const due = new Date(r.dueAt);
+      const returned = r.returnedAt ? new Date(r.returnedAt) : null;
+      return {
+        id: r.id,
+        bookTitle: r.bookTitle,
+        bookBarcode: r.bookBarcode,
+        borrowedAt: new Date(r.borrowedAt).toISOString(),
+        dueAt: due.toISOString(),
+        returnedAt: returned ? returned.toISOString() : null,
+        status: loanStatus(due, returned, now, cfg.gracePeriodDays),
+        daysLate: daysLate(due, returned, now),
+      };
+    });
+
+    const [totals] = await db
+      .select({
+        unpaidFines: sql<number>`coalesce(sum(${fines.amount}) filter (where ${fines.status} = 'Unpaid'), 0)::float`,
+        paidFines: sql<number>`coalesce(sum(${fines.amount}) filter (where ${fines.status} = 'Paid'), 0)::float`,
+      })
+      .from(fines)
+      .where(eq(fines.memberId, id));
+
+    res.json({
+      member,
+      history,
+      totalLoans: history.length,
+      openLoans: history.filter((h) => !h.returnedAt).length,
+      unpaidFines: totals.unpaidFines,
+      paidFines: totals.paidFines,
+    });
   }),
 );
 

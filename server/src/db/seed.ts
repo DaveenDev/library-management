@@ -66,8 +66,9 @@ async function main() {
   const bookRows = await db
     .insert(books)
     .values(
-      bookDefs.map(([barcode, title, author, subject, total, shelf, isbn, year, publisher]) => ({
+      bookDefs.map(([barcode, title, author, subject, total, shelf, isbn, year, publisher], i) => ({
         barcode,
+        accessionNo: String(i + 1).padStart(4, "0"),
         title,
         author,
         subject,

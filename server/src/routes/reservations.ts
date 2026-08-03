@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../db/index.ts";
 import { reservations, books, members } from "../db/schema.ts";
 import { ah, HttpError, pageParams } from "../lib/http.ts";
@@ -34,22 +34,53 @@ reservationsRouter.get(
   }),
 );
 
+// Holds that still occupy a slot in the queue. Cancelled and fulfilled rows
+// stay in the table for history but must not push new holds down the line.
+const OPEN_STATUSES = ["Waiting", "Ready for pickup"];
+
 reservationsRouter.post(
   "/",
   ah(async (req, res) => {
     const b = req.body ?? {};
-    if (!b.bookId || !b.memberId) throw new HttpError(400, "bookId and memberId are required");
+
+    const book = b.bookId
+      ? (await db.select().from(books).where(eq(books.id, Number(b.bookId))))[0]
+      : (await db.select().from(books).where(eq(books.barcode, String(b.bookBarcode ?? "").trim())))[0];
+    if (!book) throw new HttpError(404, "book not found");
+
+    const member = b.memberId
+      ? (await db.select().from(members).where(eq(members.id, Number(b.memberId))))[0]
+      : (await db.select().from(members).where(eq(members.memberCode, String(b.memberCode ?? "").trim())))[0];
+    if (!member) throw new HttpError(404, "member not found");
+    if (member.status === "Suspended") throw new HttpError(409, "member is suspended");
+
+    const [dupe] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(reservations)
+      .where(
+        and(
+          eq(reservations.bookId, book.id),
+          eq(reservations.memberId, member.id),
+          inArray(reservations.status, OPEN_STATUSES),
+        ),
+      );
+    if (dupe.count > 0) throw new HttpError(409, "this member already has a hold on that title");
+
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(reservations)
-      .where(eq(reservations.bookId, Number(b.bookId)));
+      .where(and(eq(reservations.bookId, book.id), inArray(reservations.status, OPEN_STATUSES)));
+
+    // A copy already on the shelf can be picked up right away; otherwise the
+    // hold waits behind whoever is already in line.
+    const ready = count === 0 && book.availableCopies > 0;
     const [row] = await db
       .insert(reservations)
       .values({
-        bookId: Number(b.bookId),
-        memberId: Number(b.memberId),
+        bookId: book.id,
+        memberId: member.id,
         queuePosition: count + 1,
-        status: count === 0 ? "Ready for pickup" : "Waiting",
+        status: ready ? "Ready for pickup" : "Waiting",
       })
       .returning();
     res.status(201).json(row);
