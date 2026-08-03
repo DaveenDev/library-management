@@ -5,9 +5,11 @@ import { Card, Badge, statusKind, Pagination, useToast } from "../components/ui.
 import { thStyle, tdStyle } from "../theme.ts";
 import { money, type Fine } from "@lumen/shared";
 import { errorMessage } from "../lib/errors.ts";
+import { useAuth } from "../auth.tsx";
 
 export function Fines() {
   const toast = useToast();
+  const canWrite = useAuth().can("fines:write");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const { data, refresh } = usePaginated((p) => api.fines(p), { page, pageSize }, [page, pageSize]);
@@ -54,7 +56,7 @@ export function Fines() {
                   <td style={tdStyle}><span style={{ fontWeight: 600 }}>{money(f.amount)}</span></td>
                   <td style={tdStyle}><Badge kind={statusKind(f.status)}>{f.status}</Badge></td>
                   <td style={tdStyle}><div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                    {f.status === "Unpaid" && (<>
+                    {f.status === "Unpaid" && canWrite && (<>
                       <button onClick={() => waive(f)} style={{ padding: "7px 13px", borderRadius: "8px", border: "1px solid var(--border-input, #ddd2b8)", background: "var(--bg-input, #fffdf7)", fontFamily: "inherit", fontSize: "12.5px", fontWeight: 500, color: "#6f6653", cursor: "pointer" }}>Waive</button>
                       <button onClick={() => collect(f)} style={{ padding: "7px 14px", borderRadius: "8px", border: "1px solid var(--accent, #3d6b53)", background: "var(--accent-soft, #e3ebdd)", fontFamily: "inherit", fontSize: "12.5px", fontWeight: 600, color: "var(--accent, #3d6b53)", cursor: "pointer" }}>Collect</button>
                     </>)}

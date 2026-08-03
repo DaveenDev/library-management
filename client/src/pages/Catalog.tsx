@@ -9,9 +9,13 @@ import { thStyle, tdStyle, tdMonoStyle, primaryBtn, inputStyle, iconBtn, ghostBt
 import { useAsync } from "../hooks.ts";
 import type { Book, BookInput } from "@lumen/shared";
 import { errorMessage } from "../lib/errors.ts";
+import { useAuth } from "../auth.tsx";
 
 export function Catalog({ initialQuery }: { initialQuery?: { text: string; nonce: number } }) {
   const toast = useToast();
+  const { can } = useAuth();
+  const canWrite = can("catalog:write");
+  const canCirculate = can("circulation:write");
   const [q, setQ] = useState(initialQuery?.text ?? "");
   const [subject, setSubject] = useState("All");
   const [page, setPage] = useState(1);
@@ -63,7 +67,7 @@ export function Catalog({ initialQuery }: { initialQuery?: { text: string; nonce
               );
             })}
           </div>
-          <button onClick={() => setShowAdd(true)} style={primaryBtn}><Icon name="plus" color="var(--bg-card,#fbf7ee)" size={16} /><span>Add Book</span></button>
+          {canWrite && <button onClick={() => setShowAdd(true)} style={primaryBtn}><Icon name="plus" color="var(--bg-card,#fbf7ee)" size={16} /><span>Add Book</span></button>}
         </div>
       </Card>
 
@@ -87,9 +91,9 @@ export function Catalog({ initialQuery }: { initialQuery?: { text: string; nonce
                     <td style={tdMonoStyle}>{b.shelf ?? "—"}</td>
                     <td style={tdStyle}><Badge kind={statusKind(status)}>{status}</Badge></td>
                     <td style={tdStyle}><div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                      <button style={iconBtn} title="Reserve" onClick={() => setReserving(b)}><Icon name="bookmark" color="#6f6653" size={15} /></button>
-                      <button style={iconBtn} title="Edit" onClick={() => setEditing(b)}><Icon name="edit" color="#6f6653" size={15} /></button>
-                      <button style={iconBtn} title="Delete" onClick={() => del(b)}><Icon name="trash" color="#a4472f" size={15} /></button>
+                      {canCirculate && <button style={iconBtn} title="Reserve" onClick={() => setReserving(b)}><Icon name="bookmark" color="#6f6653" size={15} /></button>}
+                      {canWrite && <button style={iconBtn} title="Edit" onClick={() => setEditing(b)}><Icon name="edit" color="#6f6653" size={15} /></button>}
+                      {canWrite && <button style={iconBtn} title="Delete" onClick={() => del(b)}><Icon name="trash" color="#a4472f" size={15} /></button>}
                     </div></td>
                   </tr>
                 );

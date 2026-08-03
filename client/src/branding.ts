@@ -17,16 +17,3 @@ export const LIBRARY = {
   /** Domain used for the placeholder in the "add staff user" email field. */
   emailDomain: "lumenlibrary.org",
 };
-
-/**
- * The account shown in the sidebar.
- *
- * This app has no authentication yet (see the README's Security section), so
- * there is no real signed-in user — this is a fixed placeholder. Wire it to a
- * real session when you add auth.
- */
-export const CURRENT_USER = {
-  name: "Daveen Dev",
-  role: "Head Librarian",
-  initials: "DD",
-};

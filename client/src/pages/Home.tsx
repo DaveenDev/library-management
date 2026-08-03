@@ -8,8 +8,10 @@ import { primaryBtn, inputStyle, ghostBtn } from "../theme.ts";
 import type { Book } from "@lumen/shared";
 import type { PageProps } from "../App.tsx";
 import { errorMessage } from "../lib/errors.ts";
+import { useAuth } from "../auth.tsx";
 
 export function Home({ navigate }: PageProps) {
+  const canCirculate = useAuth().can("circulation:write");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Book[]>([]);
   const [borrowBook, setBorrowBook] = useState<Book | null>(null);
@@ -67,7 +69,7 @@ export function Home({ navigate }: PageProps) {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: "none" }}>
                   <Badge kind={statusKind(b.availableCopies > 0 ? "Available" : "All out")}>{b.availableCopies} available</Badge>
-                  {b.availableCopies > 0 ? (
+                  {!canCirculate ? null : b.availableCopies > 0 ? (
                     <button onClick={() => setBorrowBook(b)} style={{ padding: "9px 16px", borderRadius: "8px", border: "1px solid var(--accent, #3d6b53)", background: "var(--accent-soft, #e3ebdd)", color: "var(--accent, #3d6b53)", fontFamily: "inherit", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>Borrow</button>
                   ) : (
                     <button onClick={() => setReserveBook(b)} style={{ padding: "9px 16px", borderRadius: "8px", border: "1px solid var(--border-input, #ddd2b8)", background: "var(--bg-input, #fffdf7)", color: "#6f6653", fontFamily: "inherit", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>Reserve</button>

@@ -7,10 +7,9 @@ barcode/QR labels, and exportable reports.
 Built with **React + TypeScript**, **Express**, and **PostgreSQL** (Drizzle ORM),
 in an npm-workspaces monorepo.
 
-> **Heads up before you deploy this:** the app currently has **no
-> authentication** — every visitor has full librarian powers. It is safe to run
-> on your own machine or a private network, but do not put it on the public
-> internet as-is. See [Security](#security) for details.
+> **Before you deploy this:** set `AUTH_SECRET` and change the demo staff
+> passwords. Staff sign-in and role enforcement are in place, but the seeded
+> accounts all share a published password. See [Security](#security).
 
 ---
 
@@ -155,6 +154,13 @@ PORT=4000
 
 `server/.env` is gitignored — your credentials never get committed.
 
+Two further variables matter once you deploy:
+
+| Variable | Purpose |
+|----------|---------|
+| `AUTH_SECRET` | Signs session cookies. **Required in production** — the server refuses to start without it. Left unset in development, a random key is generated per process, so sessions end when the server restarts. |
+| `CORS_ORIGIN` | Comma-separated browser origins allowed to send authenticated requests. Defaults to the Vite dev server; only needed when the client is served from a different origin than the API. |
+
 ### 5. Create the schema and load sample data
 
 ```bash
@@ -175,7 +181,9 @@ npm run dev
 ```
 
 This starts the API on **http://localhost:4000** and the web client on
-**http://localhost:5173**. Open the client URL in your browser.
+**http://localhost:5173**. Open the client URL in your browser and sign in as
+`daveen.dev@lumenlibrary.org` with the password `lumen-demo-2024` — the seeded
+Admin account. Other demo sign-ins are listed under [Demo data](#demo-data).
 
 > If port 5173 is already taken, Vite will pick the next free one and print the
 > actual URL — read the terminal rather than assuming 5173.
@@ -198,9 +206,8 @@ export const LIBRARY = {
 };
 ```
 
-The same file holds `CURRENT_USER`, the placeholder account shown in the
-sidebar. It's fixed because there's no authentication yet — replace it with a
-real session when you add auth.
+The account shown in the sidebar is the signed-in staff member, taken from the
+session — there is nothing to configure.
 
 ### Currency
 
@@ -259,8 +266,18 @@ by typing the codes manually:
 | `F-0231` | Dr. Elena Rossi | Faculty |
 | `S-1198` | Marcus Bell | **Suspended** — good for testing rejection |
 
-Try it: go to **Circulation**, type `LIB-000845`, press Enter, type `S-1042`,
-press Enter.
+**Staff sign-ins** — every seeded account uses the password
+`lumen-demo-2024`. Sign in as each to see the roles enforced.
+
+| Email | Role | Notes |
+|-------|------|-------|
+| `daveen.dev@lumenlibrary.org` | Admin | Full access |
+| `e.rossi@lumenlibrary.org` | Librarian | No staff or policy management |
+| `m.lee@lumenlibrary.org` | Assistant | Circulation only |
+| `s.kim@lumenlibrary.org` | Librarian | **Disabled** — sign-in is refused |
+
+Try it: sign in as the Admin, go to **Circulation**, type `LIB-000845`, press
+Enter, type `S-1042`, press Enter.
 
 ---
 
@@ -321,24 +338,33 @@ Base URL `http://localhost:4000/api`.
 | Resource | Endpoints |
 |----------|-----------|
 | Health | `GET /health` |
+| Auth | `POST /auth/login` · `POST /auth/logout` · `GET /auth/me` |
 | Dashboard | `GET /dashboard` |
 | Books | `GET /books` · `POST /books` · `PATCH /books/:id` · `DELETE /books/:id` |
 | Members | `GET /members` · `GET /members/:id/history` · `POST /members` · `PATCH /members/:id` · `DELETE /members/:id` |
 | Loans | `GET /loans` · `POST /loans/checkout` · `POST /loans/checkin` · `POST /loans/:id/return` · `POST /loans/:id/renew` |
 | Reservations | `GET /reservations` · `POST /reservations` · `POST /reservations/:id/fulfill` · `POST /reservations/:id/cancel` |
 | Fines | `GET /fines` · `GET /fines/summary` · `POST /fines/:id/collect` · `POST /fines/:id/waive` |
-| Staff | `GET /users` · `POST /users` · `DELETE /users/:id` |
+| Staff | `GET /users` · `POST /users` · `PATCH /users/:id` · `DELETE /users/:id` |
 | Settings | `GET /settings` · `PUT /settings` · `POST /settings/lookups/:kind` · `DELETE /settings/lookups/:kind/:value` |
 | Reports | `GET /reports/:type?from=&to=` |
 
 Report types: `overdue` · `fines` · `books` · `borrowed` · `inventory` ·
 `transactions` · `members`
 
+Every route except `/health` and `/auth/*` requires a session cookie, and each
+mutation additionally requires the [permission](#roles) for that resource.
+
 Checkout and check-in accept either database ids or human codes, so a scanner
-can drive them directly:
+can drive them directly — note the cookie jar, without which the request is a
+401:
 
 ```bash
-curl -X POST http://localhost:4000/api/loans/checkout \
+curl -c jar -X POST http://localhost:4000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"daveen.dev@lumenlibrary.org","password":"lumen-demo-2024"}'
+
+curl -b jar -X POST http://localhost:4000/api/loans/checkout \
   -H "Content-Type: application/json" \
   -d '{"bookBarcode":"LIB-000845","memberCode":"S-1042"}'
 ```
@@ -347,20 +373,56 @@ curl -X POST http://localhost:4000/api/loans/checkout \
 
 ## Security
 
-**This app has no authentication or authorisation.** Every endpoint is open and
-CORS is unrestricted (`app.use(cors())`). Anyone who can reach the server can
-read every borrower record and delete the entire catalogue.
+### How authentication works
 
-The User Management screen manages *rows in a staff table* — it is a directory,
-not a login system. Nothing enforces those roles.
+Staff sign in with an email and password. The password is hashed with scrypt
+(salted, one hash per account) and never leaves the server. A successful
+sign-in returns a signed session token in an **httpOnly** cookie, so no script
+on the page can read it — an XSS bug cannot steal a session.
 
-That's fine for local use, a classroom demo, or a machine on a private LAN. It
-is **not** safe on the public internet. Before deploying anywhere reachable:
+`requireAuth` is mounted on `/api` as a whole, so every route except the health
+check and the sign-in endpoints needs a session. It re-reads the staff account
+from the database on each request rather than trusting the token's claims,
+which means disabling an account takes effect immediately rather than whenever
+that person's token happens to expire.
 
-1. Add real authentication (session or JWT) and require it on every `/api` route.
-2. Enforce the staff roles that the UI already displays.
-3. Restrict CORS to your actual frontend origin.
-4. Put it behind HTTPS.
+Sign-in is throttled per address, answers an unknown address exactly as it
+answers a wrong password, and only reveals that an account is disabled after
+the password has been proven — so it cannot be used to enumerate staff.
+
+### Roles
+
+Roles map to permissions in [`shared/types.ts`](shared/types.ts), which both
+the client and the server import. The client hides what a role cannot do and
+the server refuses it; because they read the same table, they cannot disagree.
+
+| | Admin | Librarian | Assistant |
+|---|---|---|---|
+| Read every screen | ✅ | ✅ | ✅ |
+| Check out / return / renew / hold | ✅ | ✅ | ✅ |
+| Add, edit, remove books | ✅ | ✅ | — |
+| Register and edit borrowers | ✅ | ✅ | — |
+| Collect and waive fines | ✅ | ✅ | — |
+| Change fine policy and lists | ✅ | — | — |
+| Manage staff accounts | ✅ | — | — |
+
+Theme and accent are exempt from the settings permission — they are appearance,
+not policy, and every role can change them.
+
+An Admin cannot demote, disable or delete their own account, which is the easy
+way to leave a library with no administrator.
+
+### Before deploying
+
+1. **Set `AUTH_SECRET`** to a long random value. The server refuses to start in
+   production without one, because a predictable signing key would let anyone
+   mint an Admin session.
+2. **Change the demo passwords.** Every seeded account uses the password
+   printed by `npm run db:seed`, and it is in this repository.
+3. **Set `CORS_ORIGIN`** to your actual frontend origin if the client is served
+   from somewhere other than the API.
+4. **Put it behind HTTPS.** Session cookies are marked `secure` in production,
+   so sign-in will not work over plain HTTP.
 5. Consider that borrower records are personal data, with the obligations that
    carry in your jurisdiction.
 

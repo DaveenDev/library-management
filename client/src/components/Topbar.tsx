@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import { Icon } from "../icons.tsx";
 import { THEMES, ACCENTS, type ThemeKey } from "../theme.ts";
-import { CURRENT_USER } from "../branding.ts";
+import { useAuth } from "../auth.tsx";
 
 export function Topbar({
   title, subtitle, accent, theme, onTheme, onAccent, onSearch,
@@ -9,6 +9,7 @@ export function Topbar({
   title: string; subtitle: string; accent: string; theme: ThemeKey;
   onTheme: (t: ThemeKey) => void; onAccent: (c: string) => void; onSearch: (query: string) => void;
 }) {
+  const { user } = useAuth();
   const [showPanel, setShowPanel] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -72,7 +73,7 @@ export function Topbar({
             </>
           )}
         </div>
-        <div style={avatarStyle}>{CURRENT_USER.initials}</div>
+        <div style={avatarStyle} title={`${user?.name} · ${user?.role}`}>{user?.initials}</div>
       </div>
     </header>
   );

@@ -1,12 +1,30 @@
 import type {
   Book, BookInput, Member, MemberInput, MemberHistory, Loan, Reservation, Fine,
-  StaffUser, Settings, LookupLists, DashboardStats, Paginated,
+  StaffUser, Session, Settings, LookupLists, DashboardStats, Paginated,
 } from "@lumen/shared";
 
 const BASE = "/api";
 
+type UnauthorizedHandler = () => void;
+const unauthorizedHandlers = new Set<UnauthorizedHandler>();
+
+/**
+ * Register a callback for "the server no longer accepts this session".
+ *
+ * Any request can be the one that discovers an expired cookie, so the auth
+ * provider subscribes here rather than every page having to notice a 401 and
+ * decide what to do about it. Returns an unsubscribe function.
+ */
+export function onUnauthorized(handler: UnauthorizedHandler): () => void {
+  unauthorizedHandlers.add(handler);
+  return () => unauthorizedHandlers.delete(handler);
+}
+
 async function req<T>(path: string, opts?: RequestInit): Promise<T> {
   const res = await fetch(BASE + path, {
+    // The session cookie has to ride along even when the client is served from
+    // a different origin than the API.
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     ...opts,
   });
@@ -16,6 +34,11 @@ async function req<T>(path: string, opts?: RequestInit): Promise<T> {
       const body = await res.json();
       if (body?.error) msg = body.error;
     } catch { /* ignore */ }
+    // `/auth/me` 401s as its normal "not signed in" answer, and the login form
+    // 401s on a bad password; neither means an established session just ended.
+    if (res.status === 401 && !path.startsWith("/auth/")) {
+      unauthorizedHandlers.forEach((h) => h());
+    }
     throw new Error(msg);
   }
   if (res.status === 204) return undefined as T;
@@ -55,6 +78,12 @@ export interface FinesSummary {
 }
 
 export const api = {
+  // auth
+  me: () => req<Session>("/auth/me"),
+  login: (email: string, password: string) =>
+    req<Session>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
+  logout: () => req<void>("/auth/logout", { method: "POST" }),
+
   // dashboard
   dashboard: () => req<DashboardStats>("/dashboard"),
 
@@ -94,7 +123,10 @@ export const api = {
 
   // users
   users: (p: ListParams = {}) => req<Paginated<StaffUser>>(`/users${qs(p)}`),
-  createUser: (body: Partial<StaffUser>) => req<StaffUser>("/users", { method: "POST", body: JSON.stringify(body) }),
+  createUser: (body: Partial<StaffUser> & { password?: string }) =>
+    req<StaffUser>("/users", { method: "POST", body: JSON.stringify(body) }),
+  updateUser: (id: number, body: Partial<StaffUser> & { password?: string }) =>
+    req<StaffUser>(`/users/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
   deleteUser: (id: number) => req<void>(`/users/${id}`, { method: "DELETE" }),
 
   // settings

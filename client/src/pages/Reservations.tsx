@@ -7,11 +7,13 @@ import { Icon } from "../icons.tsx";
 import { thStyle, tdStyle, primaryBtn } from "../theme.ts";
 import type { Reservation } from "@lumen/shared";
 import { errorMessage } from "../lib/errors.ts";
+import { useAuth } from "../auth.tsx";
 
 const fmt = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "2-digit" });
 
 export function Reservations() {
   const toast = useToast();
+  const canWrite = useAuth().can("circulation:write");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [showNew, setShowNew] = useState(false);
@@ -37,9 +39,11 @@ export function Reservations() {
             <h3 style={{ margin: 0, fontFamily: "Spectral,serif", fontSize: "17px", fontWeight: 600 }}>Holds Queue</h3>
             <p style={{ margin: "4px 0 0", fontSize: "12.5px", color: "#8a8069" }}>Reserved titles awaiting pickup or in line</p>
           </div>
-          <button onClick={() => setShowNew(true)} style={primaryBtn}>
-            <Icon name="plus" color="var(--bg-card,#fbf7ee)" size={16} /><span>New Hold</span>
-          </button>
+          {canWrite && (
+            <button onClick={() => setShowNew(true)} style={primaryBtn}>
+              <Icon name="plus" color="var(--bg-card,#fbf7ee)" size={16} /><span>New Hold</span>
+            </button>
+          )}
         </div>
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -53,7 +57,7 @@ export function Reservations() {
                   <td style={tdStyle}>{queueLabel(r)}</td>
                   <td style={tdStyle}><Badge kind={statusKind(r.status)}>{r.status}</Badge></td>
                   <td style={tdStyle}><div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                    {isOpen(r) && (<>
+                    {isOpen(r) && canWrite && (<>
                       <button onClick={() => fulfill(r)} style={{ padding: "7px 13px", borderRadius: "8px", border: "1px solid var(--accent, #3d6b53)", background: "var(--accent-soft, #e3ebdd)", fontFamily: "inherit", fontSize: "12.5px", fontWeight: 600, color: "var(--accent, #3d6b53)", cursor: "pointer" }}>Fulfill</button>
                       <button onClick={() => cancel(r)} style={{ padding: "7px 13px", borderRadius: "8px", border: "1px solid var(--border-input, #ddd2b8)", background: "var(--bg-input, #fffdf7)", fontFamily: "inherit", fontSize: "12.5px", fontWeight: 500, color: "#a4472f", cursor: "pointer" }}>Cancel</button>
                     </>)}

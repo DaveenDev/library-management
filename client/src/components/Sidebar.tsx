@@ -1,14 +1,15 @@
 import type { CSSProperties } from "react";
 import { Icon, type IconName } from "../icons.tsx";
 import type { Section } from "../nav.ts";
-import { NAV_ITEMS, SETTINGS_ITEMS } from "../nav.ts";
-import { CURRENT_USER } from "../branding.ts";
+import { NAV_ITEMS, SECTION_PERMISSION, SETTINGS_ITEMS } from "../nav.ts";
+import { useAuth } from "../auth.tsx";
 
 export function Sidebar({
   section, accent, onNavigate,
 }: {
   section: Section; accent: string; onNavigate: (s: Section) => void;
 }) {
+  const { user, can, signOut } = useAuth();
   const brandStyle: CSSProperties = { width: "38px", height: "38px", borderRadius: "10px", background: accent, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--bg-page, #f4eede)", fontFamily: "Spectral, serif", fontWeight: 700, fontSize: "20px", flex: "none" };
   const avatarStyle: CSSProperties = { width: "36px", height: "36px", borderRadius: "50%", background: accent, color: "var(--bg-page, #f4eede)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, fontSize: "14px", fontFamily: "Spectral, serif", flex: "none" };
 
@@ -46,7 +47,10 @@ export function Sidebar({
           );
         })}
         <div style={{ ...sectionLabel, padding: "14px 12px 2px" }}>Settings</div>
-        {SETTINGS_ITEMS.map(([key, label, icon]) => {
+        {SETTINGS_ITEMS.filter(([key]) => {
+          const needed = SECTION_PERMISSION[key];
+          return !needed || can(needed);
+        }).map(([key, label, icon]) => {
           const active = section === key;
           return (
             <button key={key} className="lm-hover" style={navBtn(active, true)} onClick={() => onNavigate(key)}>
@@ -58,11 +62,18 @@ export function Sidebar({
       </nav>
 
       <div style={{ marginTop: "14px", flex: "none", display: "flex", alignItems: "center", gap: "11px", padding: "12px", background: "var(--bg-soft, #f3edda)", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "11px" }}>
-        <div style={avatarStyle}>{CURRENT_USER.initials}</div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: "13.5px", fontWeight: 600, color: "#2a2620", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{CURRENT_USER.name}</div>
-          <div style={{ fontSize: "11.5px", color: "#8a8069" }}>{CURRENT_USER.role}</div>
+        <div style={avatarStyle} aria-hidden="true">{user?.initials}</div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: "13.5px", fontWeight: 600, color: "#2a2620", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user?.name}</div>
+          <div style={{ fontSize: "11.5px", color: "#8a8069" }}>{user?.role}</div>
         </div>
+        <button
+          onClick={signOut}
+          title="Sign out"
+          style={{ width: "30px", height: "30px", flex: "none", borderRadius: "8px", border: "1px solid var(--border-input, #ddd2b8)", background: "var(--bg-input, #fffdf7)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+        >
+          <Icon name="signOut" color="#6f6653" size={15} />
+        </button>
       </div>
     </aside>
   );

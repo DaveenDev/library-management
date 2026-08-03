@@ -6,9 +6,11 @@ import { Icon } from "../icons.tsx";
 import { thStyle, tdStyle, tdMonoStyle, primaryBtn, inputStyle, iconBtn, ghostBtn } from "../theme.ts";
 import { money, type Member, type MemberInput, type MemberType } from "@lumen/shared";
 import { errorMessage } from "../lib/errors.ts";
+import { useAuth } from "../auth.tsx";
 
 export function Borrowers() {
   const toast = useToast();
+  const canWrite = useAuth().can("members:write");
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -31,7 +33,7 @@ export function Borrowers() {
           <span style={{ position: "absolute", left: "13px", display: "flex" }}><Icon name="search" color="#a89d82" size={16} /></span>
           <input value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search members by name or ID" style={{ width: "340px", padding: "11px 14px 11px 40px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", fontSize: "14px", color: "#2a2620" }} />
         </div>
-        <button onClick={() => setShowAdd(true)} style={primaryBtn}><Icon name="plus" color="var(--bg-card,#fbf7ee)" size={16} /><span>New Member</span></button>
+        {canWrite && <button onClick={() => setShowAdd(true)} style={primaryBtn}><Icon name="plus" color="var(--bg-card,#fbf7ee)" size={16} /><span>New Member</span></button>}
       </Card>
 
       <Card style={{ overflow: "hidden" }}>
@@ -52,8 +54,8 @@ export function Borrowers() {
                   <td style={tdStyle}><Badge kind={statusKind(m.status)}>{m.status}</Badge></td>
                   <td style={tdStyle}><div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
                     <button style={iconBtn} title="Borrowing history" onClick={() => setViewing(m)}><Icon name="file" color="#6f6653" size={15} /></button>
-                    <button style={iconBtn} title="Edit" onClick={() => setEditing(m)}><Icon name="edit" color="#6f6653" size={15} /></button>
-                    <button style={iconBtn} title="Delete" onClick={() => del(m)}><Icon name="trash" color="#a4472f" size={15} /></button>
+                    {canWrite && <button style={iconBtn} title="Edit" onClick={() => setEditing(m)}><Icon name="edit" color="#6f6653" size={15} /></button>}
+                    {canWrite && <button style={iconBtn} title="Delete" onClick={() => del(m)}><Icon name="trash" color="#a4472f" size={15} /></button>}
                   </div></td>
                 </tr>
               ))}

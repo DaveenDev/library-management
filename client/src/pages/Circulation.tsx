@@ -6,6 +6,7 @@ import { Icon } from "../icons.tsx";
 import { thStyle, tdStyle, primaryBtnWide } from "../theme.ts";
 import { money, type Loan } from "@lumen/shared";
 import { errorMessage } from "../lib/errors.ts";
+import { useAuth } from "../auth.tsx";
 
 const scanInput = { border: "none", background: "transparent", fontSize: "14px", flex: 1, color: "#2a2620", fontFamily: "'IBM Plex Mono',monospace" } as const;
 const scanBox = { display: "flex", alignItems: "center", gap: "10px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", padding: "10px 12px" } as const;
@@ -15,6 +16,7 @@ const fmt = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: 
 
 export function Circulation() {
   const toast = useToast();
+  const canWrite = useAuth().can("circulation:write");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [bookBarcode, setBookBarcode] = useState("");
@@ -80,7 +82,7 @@ export function Circulation() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+      {canWrite && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
         <Card style={{ padding: "20px 22px" }}>
           <h3 style={{ margin: "0 0 4px", fontFamily: "Spectral,serif", fontSize: "17px", fontWeight: 600 }}>Check Out</h3>
           <p style={{ margin: "0 0 16px", fontSize: "12.5px", color: "#8a8069" }}>Scan the book and the member ID</p>
@@ -100,7 +102,7 @@ export function Circulation() {
           </div>
           <button onClick={checkin} style={primaryBtnWide}><Icon name="check" color="var(--bg-card,#fbf7ee)" size={16} /><span>Confirm Return</span></button>
         </Card>
-      </div>
+      </div>}
 
       <Card style={{ overflow: "hidden" }}>
         <div style={{ padding: "18px 22px 6px" }}><h3 style={{ margin: 0, fontFamily: "Spectral,serif", fontSize: "17px", fontWeight: 600 }}>Active Loans</h3></div>
@@ -116,8 +118,8 @@ export function Circulation() {
                   <td style={tdStyle}>{fmt(l.dueAt)}</td>
                   <td style={tdStyle}><Badge kind={statusKind(l.status)}>{l.status}</Badge></td>
                   <td style={tdStyle}><div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                    <button onClick={() => renew(l)} style={{ padding: "7px 13px", borderRadius: "8px", border: "1px solid var(--border-input, #ddd2b8)", background: "var(--bg-input, #fffdf7)", fontFamily: "inherit", fontSize: "12.5px", fontWeight: 500, color: "#3a352c", cursor: "pointer" }}>Renew</button>
-                    <button onClick={() => ret(l)} style={{ padding: "7px 13px", borderRadius: "8px", border: "1px solid var(--accent, #3d6b53)", background: "var(--accent-soft, #e3ebdd)", fontFamily: "inherit", fontSize: "12.5px", fontWeight: 600, color: "var(--accent, #3d6b53)", cursor: "pointer" }}>Return</button>
+                    {canWrite && <button onClick={() => renew(l)} style={{ padding: "7px 13px", borderRadius: "8px", border: "1px solid var(--border-input, #ddd2b8)", background: "var(--bg-input, #fffdf7)", fontFamily: "inherit", fontSize: "12.5px", fontWeight: 500, color: "#3a352c", cursor: "pointer" }}>Renew</button>}
+                    {canWrite && <button onClick={() => ret(l)} style={{ padding: "7px 13px", borderRadius: "8px", border: "1px solid var(--accent, #3d6b53)", background: "var(--accent-soft, #e3ebdd)", fontFamily: "inherit", fontSize: "12.5px", fontWeight: 600, color: "var(--accent, #3d6b53)", cursor: "pointer" }}>Return</button>}
                   </div></td>
                 </tr>
               ))}
