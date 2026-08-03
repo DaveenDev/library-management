@@ -1,14 +1,28 @@
-import type { CSSProperties } from "react";
+import { useEffect, type CSSProperties } from "react";
 import { Icon, type IconName } from "../icons.tsx";
 import type { Section } from "../nav.ts";
-import { NAV_ITEMS, SETTINGS_ITEMS } from "../nav.ts";
-import { CURRENT_USER } from "../branding.ts";
+import { NAV_ITEMS, SECTION_PERMISSION, SETTINGS_ITEMS } from "../nav.ts";
+import { useAuth } from "../auth.tsx";
 
 export function Sidebar({
-  section, accent, onNavigate,
+  section, accent, onNavigate, open, onClose,
 }: {
   section: Section; accent: string; onNavigate: (s: Section) => void;
+  /** Only consulted below the 900px breakpoint, where the sidebar is a drawer. */
+  open: boolean; onClose: () => void;
 }) {
+  const { user, can, signOut } = useAuth();
+
+  // Escape closes the drawer, matching the modal. Harmless while the sidebar
+  // is permanently visible, since `open` is false and closing is a no-op.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
   const brandStyle: CSSProperties = { width: "38px", height: "38px", borderRadius: "10px", background: accent, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--bg-page, #f4eede)", fontFamily: "Spectral, serif", fontWeight: 700, fontSize: "20px", flex: "none" };
   const avatarStyle: CSSProperties = { width: "36px", height: "36px", borderRadius: "50%", background: accent, color: "var(--bg-page, #f4eede)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, fontSize: "14px", fontFamily: "Spectral, serif", flex: "none" };
 
@@ -25,45 +39,66 @@ export function Sidebar({
   const sectionLabel: CSSProperties = { fontSize: "10.5px", fontWeight: 600, letterSpacing: ".11em", textTransform: "uppercase", color: "#a89d82", padding: "2px 12px 8px" };
 
   return (
-    <aside style={{ width: "216px", flex: "none", height: "100vh", background: "var(--bg-sidebar, #eae1cb)", borderRight: "1px solid var(--border-sidebar, #dbd0b5)", display: "flex", flexDirection: "column", padding: "20px 11px 14px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "4px 10px 22px" }}>
-        <div style={brandStyle}>L</div>
-        <div>
-          <div style={{ fontFamily: "Spectral,serif", fontWeight: 600, fontSize: "19px", color: "#2a2620", lineHeight: 1 }}>Lumen</div>
-          <div style={{ fontSize: "10.5px", color: "#8a8069", letterSpacing: ".11em", textTransform: "uppercase", marginTop: "3px" }}>Library System</div>
+    <>
+      {/* Only rendered while the drawer is open, which below 900px is the only
+          time the sidebar overlays anything worth dismissing. */}
+      {open && (
+        <div
+          onClick={onClose}
+          style={{ position: "fixed", inset: 0, background: "rgba(38,34,26,.4)", zIndex: 55 }}
+        />
+      )}
+      <aside className="lm-sidebar" data-open={open} style={{ width: "216px", flex: "none", height: "100vh", background: "var(--bg-sidebar, #eae1cb)", borderRight: "1px solid var(--border-sidebar, #dbd0b5)", display: "flex", flexDirection: "column", padding: "20px 11px 14px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "4px 10px 22px" }}>
+          <div style={brandStyle} aria-hidden="true">L</div>
+          <div>
+            <div style={{ fontFamily: "Spectral,serif", fontWeight: 600, fontSize: "19px", color: "#2a2620", lineHeight: 1 }}>Lumen</div>
+            <div style={{ fontSize: "10.5px", color: "#8a8069", letterSpacing: ".11em", textTransform: "uppercase", marginTop: "3px" }}>Library System</div>
+          </div>
         </div>
-      </div>
 
-      <div style={sectionLabel}>Main Menu</div>
-      <nav style={{ display: "flex", flexDirection: "column", gap: "3px", flex: 1, minHeight: 0, overflowY: "auto", margin: "0 -4px", padding: "0 4px" }}>
-        {NAV_ITEMS.map(([key, label, icon]) => {
-          const active = section === key;
-          return (
-            <button key={key} className="lm-hover" style={navBtn(active)} onClick={() => onNavigate(key)}>
-              <Icon name={icon as IconName} color={active ? accent : "#8a8069"} size={18} />
-              <span>{label}</span>
-            </button>
-          );
-        })}
-        <div style={{ ...sectionLabel, padding: "14px 12px 2px" }}>Settings</div>
-        {SETTINGS_ITEMS.map(([key, label, icon]) => {
-          const active = section === key;
-          return (
-            <button key={key} className="lm-hover" style={navBtn(active, true)} onClick={() => onNavigate(key)}>
-              <Icon name={icon as IconName} color={active ? accent : "#8a8069"} size={15} />
-              <span>{label}</span>
-            </button>
-          );
-        })}
-      </nav>
+        <div style={sectionLabel}>Main Menu</div>
+        <nav aria-label="Main" style={{ display: "flex", flexDirection: "column", gap: "3px", flex: 1, minHeight: 0, overflowY: "auto", margin: "0 -4px", padding: "0 4px" }}>
+          {NAV_ITEMS.map(([key, label, icon]) => {
+            const active = section === key;
+            return (
+              <button key={key} className="lm-hover" aria-current={active ? "page" : undefined} style={navBtn(active)} onClick={() => onNavigate(key)}>
+                <Icon name={icon as IconName} color={active ? accent : "#8a8069"} size={18} />
+                <span>{label}</span>
+              </button>
+            );
+          })}
+          <div style={{ ...sectionLabel, padding: "14px 12px 2px" }}>Settings</div>
+          {SETTINGS_ITEMS.filter(([key]) => {
+            const needed = SECTION_PERMISSION[key];
+            return !needed || can(needed);
+          }).map(([key, label, icon]) => {
+            const active = section === key;
+            return (
+              <button key={key} className="lm-hover" aria-current={active ? "page" : undefined} style={navBtn(active, true)} onClick={() => onNavigate(key)}>
+                <Icon name={icon as IconName} color={active ? accent : "#8a8069"} size={15} />
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </nav>
 
-      <div style={{ marginTop: "14px", flex: "none", display: "flex", alignItems: "center", gap: "11px", padding: "12px", background: "var(--bg-soft, #f3edda)", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "11px" }}>
-        <div style={avatarStyle}>{CURRENT_USER.initials}</div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: "13.5px", fontWeight: 600, color: "#2a2620", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{CURRENT_USER.name}</div>
-          <div style={{ fontSize: "11.5px", color: "#8a8069" }}>{CURRENT_USER.role}</div>
+        <div style={{ marginTop: "14px", flex: "none", display: "flex", alignItems: "center", gap: "11px", padding: "12px", background: "var(--bg-soft, #f3edda)", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "11px" }}>
+          <div style={avatarStyle} aria-hidden="true">{user?.initials}</div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: "13.5px", fontWeight: 600, color: "#2a2620", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user?.name}</div>
+            <div style={{ fontSize: "11.5px", color: "#8a8069" }}>{user?.role}</div>
+          </div>
+          <button
+            onClick={signOut}
+            title="Sign out"
+            aria-label={`Sign out ${user?.name ?? ""}`.trim()}
+            style={{ width: "30px", height: "30px", flex: "none", borderRadius: "8px", border: "1px solid var(--border-input, #ddd2b8)", background: "var(--bg-input, #fffdf7)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+          >
+            <Icon name="signOut" color="#6f6653" size={15} />
+          </button>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

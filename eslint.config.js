@@ -53,12 +53,6 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      // KNOWN FOLLOW-UP: several pages seed form state from a fetched value
-      // inside an effect (Settings, Catalog, Borrowers). The correct fix is to
-      // derive the state or key the component on the loaded data rather than
-      // syncing it. Left as a warning so it stays visible without blocking CI
-      // on a pre-existing pattern.
-      "react-hooks/set-state-in-effect": "warn",
     },
   },
   {
@@ -69,6 +63,27 @@ export default tseslint.config(
         console: "readonly",
         setTimeout: "readonly",
         URL: "readonly",
+      },
+    },
+  },
+  {
+    // The beta-test harness (.claude/skills/beta-test) is a Node script that
+    // also contains browser code: the callbacks passed to `page.evaluate` run
+    // inside Chromium, so both sets of globals are legitimate in one file.
+    files: [".claude/**/*.mjs"],
+    languageOptions: {
+      globals: {
+        process: "readonly",
+        console: "readonly",
+        fetch: "readonly",
+        URL: "readonly",
+        AbortSignal: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        document: "readonly",
+        window: "readonly",
+        getComputedStyle: "readonly",
+        CSS: "readonly",
       },
     },
   },

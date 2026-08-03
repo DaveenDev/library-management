@@ -1,12 +1,13 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
-import request from "supertest";
 import { eq } from "drizzle-orm";
 import { createApp } from "../src/app.ts";
 import { db, queryClient } from "../src/db/index.ts";
 import { reservations } from "../src/db/schema.ts";
 import { makeBook, makeMember, resetDb } from "./helpers/fixtures.ts";
+import { asAdmin } from "./helpers/auth.ts";
 
 const app = createApp();
+const agent = asAdmin(app);
 
 beforeEach(resetDb);
 afterAll(async () => {
@@ -18,7 +19,7 @@ describe("POST /api/reservations", () => {
     const book = await makeBook({ totalCopies: 2, availableCopies: 2 });
     const member = await makeMember();
 
-    const res = await request(app)
+    const res = await agent
       .post("/api/reservations")
       .send({ bookId: book.id, memberCode: member.memberCode });
 
@@ -31,7 +32,7 @@ describe("POST /api/reservations", () => {
     const book = await makeBook({ totalCopies: 1, availableCopies: 0 });
     const member = await makeMember();
 
-    const res = await request(app)
+    const res = await agent
       .post("/api/reservations")
       .send({ bookId: book.id, memberCode: member.memberCode });
 
@@ -44,8 +45,8 @@ describe("POST /api/reservations", () => {
     const member = await makeMember();
     const body = { bookId: book.id, memberCode: member.memberCode };
 
-    expect((await request(app).post("/api/reservations").send(body)).status).toBe(201);
-    const second = await request(app).post("/api/reservations").send(body);
+    expect((await agent.post("/api/reservations").send(body)).status).toBe(201);
+    const second = await agent.post("/api/reservations").send(body);
     expect(second.status).toBe(409);
     expect(second.body.error).toMatch(/already has a hold/i);
   });
@@ -55,10 +56,10 @@ describe("POST /api/reservations", () => {
     const member = await makeMember();
     const body = { bookId: book.id, memberCode: member.memberCode };
 
-    const first = await request(app).post("/api/reservations").send(body);
-    await request(app).post(`/api/reservations/${first.body.id}/cancel`);
+    const first = await agent.post("/api/reservations").send(body);
+    await agent.post(`/api/reservations/${first.body.id}/cancel`);
 
-    const again = await request(app).post("/api/reservations").send(body);
+    const again = await agent.post("/api/reservations").send(body);
     expect(again.status).toBe(201);
   });
 
@@ -69,12 +70,12 @@ describe("POST /api/reservations", () => {
     const a = await makeMember();
     const b = await makeMember();
 
-    const first = await request(app)
+    const first = await agent
       .post("/api/reservations")
       .send({ bookId: book.id, memberCode: a.memberCode });
-    await request(app).post(`/api/reservations/${first.body.id}/cancel`);
+    await agent.post(`/api/reservations/${first.body.id}/cancel`);
 
-    const second = await request(app)
+    const second = await agent
       .post("/api/reservations")
       .send({ bookId: book.id, memberCode: b.memberCode });
 
@@ -85,7 +86,7 @@ describe("POST /api/reservations", () => {
     const book = await makeBook({ availableCopies: 0 });
     const member = await makeMember({ status: "Suspended" });
 
-    const res = await request(app)
+    const res = await agent
       .post("/api/reservations")
       .send({ bookId: book.id, memberCode: member.memberCode });
 
@@ -100,7 +101,7 @@ describe("POST /api/reservations", () => {
 
     const results = await Promise.all(
       people.map((m) =>
-        request(app).post("/api/reservations").send({ bookId: book.id, memberCode: m.memberCode }),
+        agent.post("/api/reservations").send({ bookId: book.id, memberCode: m.memberCode }),
       ),
     );
     expect(results.every((r) => r.status === 201)).toBe(true);
@@ -115,13 +116,13 @@ describe("hold state transitions", () => {
   it("refuses to cancel an already-fulfilled hold", async () => {
     const book = await makeBook({ availableCopies: 1 });
     const member = await makeMember();
-    const hold = await request(app)
+    const hold = await agent
       .post("/api/reservations")
       .send({ bookId: book.id, memberCode: member.memberCode });
 
-    expect((await request(app).post(`/api/reservations/${hold.body.id}/fulfill`)).status).toBe(200);
+    expect((await agent.post(`/api/reservations/${hold.body.id}/fulfill`)).status).toBe(200);
 
-    const res = await request(app).post(`/api/reservations/${hold.body.id}/cancel`);
+    const res = await agent.post(`/api/reservations/${hold.body.id}/cancel`);
     expect(res.status).toBe(409);
     expect(res.body.error).toMatch(/already fulfilled/i);
   });
@@ -129,18 +130,18 @@ describe("hold state transitions", () => {
   it("refuses to fulfil an already-cancelled hold", async () => {
     const book = await makeBook({ availableCopies: 1 });
     const member = await makeMember();
-    const hold = await request(app)
+    const hold = await agent
       .post("/api/reservations")
       .send({ bookId: book.id, memberCode: member.memberCode });
 
-    await request(app).post(`/api/reservations/${hold.body.id}/cancel`);
+    await agent.post(`/api/reservations/${hold.body.id}/cancel`);
 
-    const res = await request(app).post(`/api/reservations/${hold.body.id}/fulfill`);
+    const res = await agent.post(`/api/reservations/${hold.body.id}/fulfill`);
     expect(res.status).toBe(409);
     expect(res.body.error).toMatch(/already cancelled/i);
   });
 
   it("404s for a hold that does not exist", async () => {
-    expect((await request(app).post("/api/reservations/999999/fulfill")).status).toBe(404);
+    expect((await agent.post("/api/reservations/999999/fulfill")).status).toBe(404);
   });
 });

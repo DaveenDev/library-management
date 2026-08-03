@@ -82,6 +82,9 @@ export const staffUsers = pgTable("staff_users", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
+  // scrypt digest, `scheme$salt$hex`. Nullable: an account created before a
+  // password is set simply cannot sign in yet.
+  passwordHash: text("password_hash"),
   role: varchar("role", { length: 16 }).notNull().default("Assistant"),
   status: varchar("status", { length: 16 }).notNull().default("Active"),
   lastActiveAt: timestamp("last_active_at", { withTimezone: true }),

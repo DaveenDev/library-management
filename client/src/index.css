@@ -47,6 +47,130 @@ tr.lm-row:hover {
   color: #a89d82;
 }
 
+/* ---------- Responsive layout ----------
+   The app is styled with inline `style` objects, which cannot express a media
+   query. Anything that has to change with viewport width therefore lives here
+   as a class, and the components reference it by name.
+
+   One breakpoint does most of the work: 900px, below which the fixed sidebar
+   stops fitting alongside content. 560px is a second step for the grids that
+   are still too cramped in two columns on a phone. */
+
+.lm-page {
+  padding: 26px 34px 52px;
+}
+
+/* Two-column form rows and panel pairs. */
+.lm-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* An emphasised main column beside a narrower aside. */
+.lm-grid-main {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+}
+
+/* A fixed-width control column beside a preview. */
+.lm-grid-aside {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+}
+
+/* Four equal tiles. */
+.lm-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* Page search boxes: a fixed pixel width stops the card wrapping cleanly. */
+.lm-searchwrap {
+  flex: 1 1 240px;
+  min-width: 0;
+  max-width: 420px;
+}
+
+/* Opens the off-canvas sidebar; hidden while the sidebar is always visible. */
+.lm-navtoggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+/* An inline `style` beats a class rule, so any property a media query below
+   needs to change has to live here rather than on the element. */
+.lm-topbar {
+  padding: 10px 34px;
+}
+
+.lm-topbar-searchwrap {
+  display: flex;
+}
+
+@media (max-width: 900px) {
+  .lm-page {
+    padding: 18px 16px 40px;
+  }
+
+  .lm-grid-2,
+  .lm-grid-main,
+  .lm-grid-aside {
+    grid-template-columns: 1fr;
+  }
+
+  .lm-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .lm-navtoggle {
+    display: flex;
+  }
+
+  /* Off-canvas: the sidebar leaves the flex row and slides over the content,
+     so the page gets the full width instead of 216px less. */
+  .lm-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 60;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    box-shadow: 0 0 40px rgba(30, 26, 20, 0.28);
+  }
+
+  .lm-sidebar[data-open="true"] {
+    transform: translateX(0);
+  }
+
+  .lm-topbar {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lm-sidebar {
+    transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  /* The topbar search duplicates a search box on every page that has one, so
+     it is the first thing to go when the bar runs out of room. */
+  .lm-topbar-searchwrap {
+    display: none;
+  }
+
+  .lm-grid-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .lm-searchwrap {
+    max-width: none;
+  }
+}
+
 /* ---------- Printing ----------
    Pages that print (label sheets, report letterhead) wrap the printable
    region in .lm-print-area. Everything else — sidebar, topbar, controls —

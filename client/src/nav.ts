@@ -15,6 +15,17 @@ export const NAV_ITEMS: [Section, string, string][] = [
   ["labels", "Labels & Barcodes", "tag"],
 ];
 
+import type { Permission } from "@lumen/shared";
+
+/**
+ * Sections that only some roles can reach. The server refuses these routes
+ * anyway; hiding them keeps a librarian from clicking into a screen that can
+ * only ever show them an error.
+ */
+export const SECTION_PERMISSION: Partial<Record<Section, Permission>> = {
+  userManagement: "users:manage",
+};
+
 export const SETTINGS_ITEMS: [Section, string, string][] = [
   ["settings", "Misc", "settings"],
   ["userManagement", "User Management", "shield"],

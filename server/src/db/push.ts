@@ -1,5 +1,4 @@
 import "dotenv/config";
-import { queryClient } from "./index.ts";
 
 // Idempotent schema creation. Mirrors src/db/schema.ts.
 // (Used instead of `drizzle-kit push` to avoid monorepo hoisting issues.)
@@ -65,6 +64,7 @@ CREATE TABLE IF NOT EXISTS staff_users (
   id serial PRIMARY KEY,
   name text NOT NULL,
   email text NOT NULL UNIQUE,
+  password_hash text,
   role varchar(16) NOT NULL DEFAULT 'Assistant',
   status varchar(16) NOT NULL DEFAULT 'Active',
   last_active_at timestamptz,
@@ -110,6 +110,17 @@ UPDATE books b
 SET accession_no = lpad(s.rn::text, 4, '0')
 FROM (SELECT id, row_number() OVER (ORDER BY id) AS rn FROM books WHERE accession_no IS NULL) s
 WHERE b.id = s.id AND b.accession_no IS NULL;
+
+-- Staff sign-in. Left nullable and unbackfilled on purpose: accounts that
+-- predate authentication have no password, and an account with no hash cannot
+-- sign in until an Admin sets one.
+ALTER TABLE staff_users ADD COLUMN IF NOT EXISTS password_hash text;
+
+-- Addresses are matched case-insensitively at sign-in, so two rows differing
+-- only in case would make one of them unreachable.
+UPDATE staff_users SET email = lower(email)
+WHERE email <> lower(email)
+  AND NOT EXISTS (SELECT 1 FROM staff_users o WHERE o.email = lower(staff_users.email));
 `;
 
 /**
@@ -122,23 +133,27 @@ export async function pushSchema(client: { unsafe: (q: string) => Promise<unknow
   await client.unsafe(MIGRATIONS);
 }
 
-async function main() {
-  console.log("Pushing schema…");
-  await queryClient.unsafe(DDL);
-  console.log("Applying migrations…");
-  await queryClient.unsafe(MIGRATIONS);
-  console.log("✔ Schema is up to date.");
-}
-
 // Only run as a CLI when invoked directly (`npm run db:push`), so importing
 // this module from tests does not tear down the process.
 const invokedDirectly = process.argv[1]?.replace(/\\/g, "/").endsWith("/db/push.ts");
 if (invokedDirectly) {
-  main()
-    .then(() => queryClient.end())
-    .then(() => process.exit(0))
-    .catch((err) => {
-      console.error(err);
-      queryClient.end().finally(() => process.exit(1));
-    });
+  // Imported here rather than at the top of the file: `db/index.ts` opens a
+  // connection pool as a side effect of being imported, and throws when
+  // DATABASE_URL is unset. The test suite imports `pushSchema` from this
+  // module and sets DATABASE_URL itself before connecting — a static import
+  // would run, and throw, before it got the chance.
+  const { queryClient } = await import("./index.ts");
+  try {
+    console.log("Pushing schema…");
+    await queryClient.unsafe(DDL);
+    console.log("Applying migrations…");
+    await queryClient.unsafe(MIGRATIONS);
+    console.log("✔ Schema is up to date.");
+    await queryClient.end();
+    process.exit(0);
+  } catch (err) {
+    console.error(err);
+    await queryClient.end();
+    process.exit(1);
+  }
 }

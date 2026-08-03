@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { CSSProperties } from "react";
 import { api } from "../api.ts";
 import { usePaginated, paginationProps } from "../hooks.ts";
@@ -9,9 +9,22 @@ import { thStyle, tdStyle, tdMonoStyle, primaryBtn, inputStyle, iconBtn, ghostBt
 import { useAsync } from "../hooks.ts";
 import type { Book, BookInput } from "@lumen/shared";
 import { errorMessage } from "../lib/errors.ts";
+import { useAuth } from "../auth.tsx";
 
+/**
+ * The topbar search lands here, since Catalog already searches title, author,
+ * subject, accession no., barcode and ISBN.
+ *
+ * App keys this component on the search nonce, so a topbar search remounts it
+ * with the query as its initial state rather than syncing the box, the
+ * subject filter and the page number from a prop inside an effect. That also
+ * means searching the same text twice still resets the view.
+ */
 export function Catalog({ initialQuery }: { initialQuery?: { text: string; nonce: number } }) {
   const toast = useToast();
+  const { can } = useAuth();
+  const canWrite = can("catalog:write");
+  const canCirculate = can("circulation:write");
   const [q, setQ] = useState(initialQuery?.text ?? "");
   const [subject, setSubject] = useState("All");
   const [page, setPage] = useState(1);
@@ -19,18 +32,6 @@ export function Catalog({ initialQuery }: { initialQuery?: { text: string; nonce
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<Book | null>(null);
   const [reserving, setReserving] = useState<Book | null>(null);
-
-  // The topbar search lands here (Catalog already covers title / author /
-  // subject / accession no. / barcode / ISBN). The nonce lets a second
-  // topbar search overwrite the query even if the text is identical to
-  // what's already in the box.
-  useEffect(() => {
-    if (initialQuery === undefined) return;
-    setQ(initialQuery.text);
-    setSubject("All");
-    setPage(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialQuery?.nonce]);
 
   const { data, loading, refresh } = usePaginated(
     (p) => api.books(p),
@@ -48,9 +49,9 @@ export function Catalog({ initialQuery }: { initialQuery?: { text: string; nonce
     <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
       <Card style={{ padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
-          <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+          <div className="lm-searchwrap" style={{ position: "relative", display: "flex", alignItems: "center" }}>
             <span style={{ position: "absolute", left: "13px", display: "flex" }}><Icon name="search" color="#a89d82" size={16} /></span>
-            <input value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search title, author, subject, accession no. or ISBN" style={{ width: "400px", padding: "11px 14px 11px 40px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", fontSize: "14px", color: "#2a2620" }} />
+            <input type="search" aria-label="Search the catalog" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search title, author, subject, accession no. or ISBN" style={{ width: "100%", padding: "11px 14px 11px 40px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", fontSize: "14px", color: "#2a2620" }} />
           </div>
           <span style={{ fontSize: "13px", color: "#8a8069" }}>{data.total} titles</span>
         </div>
@@ -63,7 +64,7 @@ export function Catalog({ initialQuery }: { initialQuery?: { text: string; nonce
               );
             })}
           </div>
-          <button onClick={() => setShowAdd(true)} style={primaryBtn}><Icon name="plus" color="var(--bg-card,#fbf7ee)" size={16} /><span>Add Book</span></button>
+          {canWrite && <button onClick={() => setShowAdd(true)} style={primaryBtn}><Icon name="plus" color="var(--bg-card,#fbf7ee)" size={16} /><span>Add Book</span></button>}
         </div>
       </Card>
 
@@ -87,9 +88,9 @@ export function Catalog({ initialQuery }: { initialQuery?: { text: string; nonce
                     <td style={tdMonoStyle}>{b.shelf ?? "—"}</td>
                     <td style={tdStyle}><Badge kind={statusKind(status)}>{status}</Badge></td>
                     <td style={tdStyle}><div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                      <button style={iconBtn} title="Reserve" onClick={() => setReserving(b)}><Icon name="bookmark" color="#6f6653" size={15} /></button>
-                      <button style={iconBtn} title="Edit" onClick={() => setEditing(b)}><Icon name="edit" color="#6f6653" size={15} /></button>
-                      <button style={iconBtn} title="Delete" onClick={() => del(b)}><Icon name="trash" color="#a4472f" size={15} /></button>
+                      {canCirculate && <button style={iconBtn} title="Reserve" aria-label={`Reserve ${b.title}`} onClick={() => setReserving(b)}><Icon name="bookmark" color="#6f6653" size={15} /></button>}
+                      {canWrite && <button style={iconBtn} title="Edit" aria-label={`Edit ${b.title}`} onClick={() => setEditing(b)}><Icon name="edit" color="#6f6653" size={15} /></button>}
+                      {canWrite && <button style={iconBtn} title="Delete" aria-label={`Delete ${b.title}`} onClick={() => del(b)}><Icon name="trash" color="#a4472f" size={15} /></button>}
                     </div></td>
                   </tr>
                 );
@@ -154,7 +155,7 @@ function BookModal({ book, onClose, onSaved }: { book: Book | null; onClose: () 
         <button onClick={save} disabled={saving} style={primaryBtn}><Icon name="check" color="var(--bg-card,#fbf7ee)" size={16} /><span>{book ? "Save Changes" : "Save Book"}</span></button>
       </>}
     >
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+      <div className="lm-grid-2" style={{ gap: "16px" }}>
         <Field label="Title *"><input value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="e.g. Dune" style={inputStyle} /></Field>
         <Field label="Author *"><input value={form.author} onChange={(e) => set("author", e.target.value)} placeholder="e.g. Frank Herbert" style={inputStyle} /></Field>
         <Field label="Subject / Category">
@@ -168,7 +169,7 @@ function BookModal({ book, onClose, onSaved }: { book: Book | null; onClose: () 
         <Field label="Publication Year"><input type="number" value={form.publicationYear ?? ""} onChange={(e) => set("publicationYear", e.target.value ? Number(e.target.value) : null)} placeholder="e.g. 1965" style={inputStyle} /></Field>
         <Field label="Publisher"><input value={form.publisher ?? ""} onChange={(e) => set("publisher", e.target.value)} placeholder="e.g. Ace Books" style={inputStyle} /></Field>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+      <div className="lm-grid-2" style={{ gap: "16px" }}>
         <Field label="Accession Number"><input value={form.accessionNo ?? ""} onChange={(e) => set("accessionNo", e.target.value)} placeholder="Auto-assigned on save (0001)" style={{ ...inputStyle, fontFamily: "'IBM Plex Mono',monospace" }} /></Field>
         <Field label="Barcode"><input value={form.barcode ?? ""} onChange={(e) => set("barcode", e.target.value)} placeholder="Auto-generated on save (LIB-000xxx)" style={{ ...inputStyle, fontFamily: "'IBM Plex Mono',monospace" }} /></Field>
       </div>

@@ -1,5 +1,8 @@
 import express, { type NextFunction, type Request, type Response } from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
+import { authRouter } from "./routes/auth.ts";
+import { requireAuth, requirePermission, writesRequire } from "./lib/auth.ts";
 import { booksRouter } from "./routes/books.ts";
 import { membersRouter } from "./routes/members.ts";
 import { loansRouter } from "./routes/loans.ts";
@@ -17,17 +20,37 @@ import { HttpError } from "./lib/http.ts";
  */
 export function createApp() {
   const app = express();
-  app.use(cors());
+  // Sessions ride in a cookie, so a wildcard origin is not an option: it would
+  // let any site on the internet issue authenticated requests on a signed-in
+  // librarian's behalf. In production the client is served from this same
+  // origin and needs no entry at all; CORS_ORIGIN covers a split deployment.
+  app.use(
+    cors({
+      origin: process.env.CORS_ORIGIN?.split(",").map((o) => o.trim()) ?? "http://localhost:5173",
+      credentials: true,
+    }),
+  );
   app.use(express.json());
+  app.use(cookieParser());
 
   app.get("/api/health", (_req, res) => res.json({ ok: true, service: "lumen-library" }));
 
-  app.use("/api/books", booksRouter);
-  app.use("/api/members", membersRouter);
-  app.use("/api/loans", loansRouter);
-  app.use("/api/reservations", reservationsRouter);
-  app.use("/api/fines", finesRouter);
-  app.use("/api/users", usersRouter);
+  app.use("/api/auth", authRouter);
+
+  // Everything mounted past this line requires a signed-in staff account.
+  // Applied here rather than per router so a new router cannot be added
+  // unprotected by omission.
+  app.use("/api", requireAuth);
+
+  app.use("/api/books", writesRequire("catalog:write"), booksRouter);
+  app.use("/api/members", writesRequire("members:write"), membersRouter);
+  app.use("/api/loans", writesRequire("circulation:write"), loansRouter);
+  app.use("/api/reservations", writesRequire("circulation:write"), reservationsRouter);
+  app.use("/api/fines", writesRequire("fines:write"), finesRouter);
+  // Staff accounts are not readable by non-admins either — the whole screen is
+  // account administration, not reference data.
+  app.use("/api/users", requirePermission("users:manage"), usersRouter);
+  // Mixed: appearance is everyone's, fine policy is not. Gated in the router.
   app.use("/api/settings", settingsRouter);
   app.use("/api/dashboard", dashboardRouter);
   app.use("/api/reports", reportsRouter);
