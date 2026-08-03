@@ -10,18 +10,20 @@ A full-stack port of the **Lumen Library System** design into a **React + Expres
 
 | Area | What works |
 |------|-----------|
-| Front Desk | Live catalog search, borrow, recent activity |
+| Front Desk | Live catalog search, borrow, **reserve when out**, recent activity |
 | Dashboard | Real stats (titles, copies, loans, overdue, fines), most-borrowed, due-soon |
-| Catalog | Search, subject filter, pagination, add/edit/delete books (auto barcode) |
-| Borrowers | Members with computed books-out & fines-due, add/edit/delete |
-| Circulation | Check-out / check-in by barcode, renew, return with **automatic fine calc** |
-| Reservations | Holds queue, fulfill / cancel |
-| Fines | Summary tiles, collect payments |
-| Reports | 6 report types over a date range, printable letterhead sheet |
-| Labels | Spine + QR label preview per title |
+| Catalog | Search by title / author / subject / **accession no. / ISBN**, subject filter, pagination, add/edit/delete books (auto barcode + auto accession number), reserve |
+| Borrowers | Members with computed books-out & fines-due, add/edit/delete, **full borrowing-history drill-down** |
+| Circulation | Check-out / check-in by barcode, renew, return with **automatic fine calc**. **USB-scanner workflow**: autofocus, Enter advances book → member → submit, then refocuses for the next borrower |
+| Reservations | Holds queue with **place-hold** (Front Desk, Catalog, or New Hold), fulfill / cancel, duplicate-hold guard |
+| Fines | Summary tiles, collect **and waive** payments |
+| Reports | 7 report types over a date range (incl. **transaction log**), printable letterhead sheet, **Excel + PDF export** |
+| Labels | **Real scannable Code 128 barcodes and QR codes** for books *and* borrower IDs, quantity-driven print sheet |
 | Settings | Fine rules + editable shelf / subject / grade / section lists |
 | User Management | Staff accounts, roles & permissions |
 | Appearance | Theme + accent picker, persisted server-side |
+
+Currency is Philippine peso (₱) throughout — see `CURRENCY_SYMBOL` in `shared/types.ts` to change it in one place.
 
 ## Prerequisites
 
@@ -60,5 +62,7 @@ Open **http://localhost:5173**. The Vite dev server proxies `/api` to the Expres
 
 Base URL `http://localhost:4000/api`
 
-`/health` · `/dashboard` · `/books` · `/members` · `/loans` (`/checkout`, `/checkin`, `/:id/return`, `/:id/renew`) · `/reservations` · `/fines` (`/summary`, `/:id/collect`) · `/users` · `/settings` (`/lookups/:kind`) · `/reports/:type`
+`/health` · `/dashboard` · `/books` · `/members` (`/:id/history`) · `/loans` (`/checkout`, `/checkin`, `/:id/return`, `/:id/renew`) · `/reservations` (`/:id/fulfill`, `/:id/cancel`) · `/fines` (`/summary`, `/:id/collect`, `/:id/waive`) · `/users` · `/settings` (`/lookups/:kind`) · `/reports/:type`
+
+Report types: `overdue` · `fines` · `books` · `borrowed` · `inventory` · `transactions` · `members`
 # library-management

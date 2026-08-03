@@ -5,3 +5,6 @@ build/
 *.local
 .DS_Store
 npm-debug.log*
+
+# TypeScript incremental build cache — regenerated on every build.
+*.tsbuildinfo
