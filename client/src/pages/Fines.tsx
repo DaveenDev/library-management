@@ -3,7 +3,7 @@ import { api } from "../api.ts";
 import { usePaginated, paginationProps, useAsync } from "../hooks.ts";
 import { Card, Badge, statusKind, Pagination, useToast } from "../components/ui.tsx";
 import { thStyle, tdStyle } from "../theme.ts";
-import type { Fine } from "@lumen/shared";
+import { money, type Fine } from "@lumen/shared";
 
 export function Fines() {
   const toast = useToast();
@@ -14,15 +14,20 @@ export function Fines() {
   const { data: settings } = useAsync(() => api.settings(), []);
 
   const collect = async (f: Fine) => {
-    try { await api.collectFine(f.id); toast(`Collected $${f.amount.toFixed(2)} from ${f.memberName}`); refresh(); refreshSummary(); }
+    try { await api.collectFine(f.id); toast(`Collected ${money(f.amount)} from ${f.memberName}`); refresh(); refreshSummary(); }
+    catch (e: any) { toast(e.message, "bad"); }
+  };
+  const waive = async (f: Fine) => {
+    if (!confirm(`Waive the ${money(f.amount)} fine for ${f.memberName}?`)) return;
+    try { await api.waiveFine(f.id); toast(`Waived ${money(f.amount)} for ${f.memberName}`); refresh(); refreshSummary(); }
     catch (e: any) { toast(e.message, "bad"); }
   };
 
   const tiles = [
-    { label: "Total Outstanding", value: `$${(summary?.outstanding ?? 0).toFixed(2)}`, danger: true },
-    { label: "Collected This Month", value: `$${(summary?.collected ?? 0).toFixed(2)}` },
+    { label: "Total Outstanding", value: money(summary?.outstanding ?? 0), danger: true },
+    { label: "Collected This Month", value: money(summary?.collected ?? 0) },
     { label: "Members With Fines", value: String(summary?.membersWithFines ?? 0) },
-    { label: "Daily Rate", value: `$${(settings?.dailyFineRate ?? 0.5).toFixed(2)}` },
+    { label: "Daily Rate", value: money(settings?.dailyFineRate ?? 0.5) },
   ];
 
   return (
@@ -45,12 +50,13 @@ export function Fines() {
                   <td style={tdStyle}><span style={{ fontWeight: 600 }}>{f.memberName}</span></td>
                   <td style={tdStyle}>{f.bookTitle}</td>
                   <td style={tdStyle}>{f.daysOverdue ? `${f.daysOverdue} days` : "—"}</td>
-                  <td style={tdStyle}><span style={{ fontWeight: 600 }}>${f.amount.toFixed(2)}</span></td>
+                  <td style={tdStyle}><span style={{ fontWeight: 600 }}>{money(f.amount)}</span></td>
                   <td style={tdStyle}><Badge kind={statusKind(f.status)}>{f.status}</Badge></td>
-                  <td style={tdStyle}><div style={{ display: "flex", justifyContent: "flex-end" }}>
-                    {f.status === "Unpaid" && (
+                  <td style={tdStyle}><div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                    {f.status === "Unpaid" && (<>
+                      <button onClick={() => waive(f)} style={{ padding: "7px 13px", borderRadius: "8px", border: "1px solid var(--border-input, #ddd2b8)", background: "var(--bg-input, #fffdf7)", fontFamily: "inherit", fontSize: "12.5px", fontWeight: 500, color: "#6f6653", cursor: "pointer" }}>Waive</button>
                       <button onClick={() => collect(f)} style={{ padding: "7px 14px", borderRadius: "8px", border: "1px solid var(--accent, #3d6b53)", background: "var(--accent-soft, #e3ebdd)", fontFamily: "inherit", fontSize: "12.5px", fontWeight: 600, color: "var(--accent, #3d6b53)", cursor: "pointer" }}>Collect</button>
-                    )}
+                    </>)}
                   </div></td>
                 </tr>
               ))}

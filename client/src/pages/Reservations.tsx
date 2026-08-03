@@ -2,7 +2,9 @@ import { useState } from "react";
 import { api } from "../api.ts";
 import { usePaginated, paginationProps } from "../hooks.ts";
 import { Card, Badge, statusKind, Pagination, useToast } from "../components/ui.tsx";
-import { thStyle, tdStyle } from "../theme.ts";
+import { ReserveModal } from "../components/ReserveModal.tsx";
+import { Icon } from "../icons.tsx";
+import { thStyle, tdStyle, primaryBtn } from "../theme.ts";
 import type { Reservation } from "@lumen/shared";
 
 const fmt = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "2-digit" });
@@ -11,6 +13,7 @@ export function Reservations() {
   const toast = useToast();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const [showNew, setShowNew] = useState(false);
   const { data, refresh } = usePaginated((p) => api.reservations(p), { page, pageSize }, [page, pageSize]);
 
   const fulfill = async (r: Reservation) => {
@@ -27,9 +30,14 @@ export function Reservations() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
       <Card style={{ overflow: "hidden" }}>
-        <div style={{ padding: "18px 22px 6px" }}>
-          <h3 style={{ margin: 0, fontFamily: "Spectral,serif", fontSize: "17px", fontWeight: 600 }}>Holds Queue</h3>
-          <p style={{ margin: "4px 0 0", fontSize: "12.5px", color: "#8a8069" }}>Reserved titles awaiting pickup or in line</p>
+        <div style={{ padding: "18px 22px 6px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+          <div>
+            <h3 style={{ margin: 0, fontFamily: "Spectral,serif", fontSize: "17px", fontWeight: 600 }}>Holds Queue</h3>
+            <p style={{ margin: "4px 0 0", fontSize: "12.5px", color: "#8a8069" }}>Reserved titles awaiting pickup or in line</p>
+          </div>
+          <button onClick={() => setShowNew(true)} style={primaryBtn}>
+            <Icon name="plus" color="var(--bg-card,#fbf7ee)" size={16} /><span>New Hold</span>
+          </button>
         </div>
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -54,6 +62,10 @@ export function Reservations() {
         </div>
         <Pagination {...paginationProps(data.total, page, pageSize, setPage, setPageSize)} />
       </Card>
+
+      {showNew && (
+        <ReserveModal book={null} onClose={() => setShowNew(false)} onDone={() => { setShowNew(false); refresh(); }} />
+      )}
     </div>
   );
 }

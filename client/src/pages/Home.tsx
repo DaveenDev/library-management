@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api.ts";
 import { useAsync } from "../hooks.ts";
 import { Card, Badge, statusKind, Modal, Field, useToast } from "../components/ui.tsx";
+import { ReserveModal } from "../components/ReserveModal.tsx";
 import { Icon } from "../icons.tsx";
 import { primaryBtn, inputStyle, ghostBtn } from "../theme.ts";
 import type { Book } from "@lumen/shared";
@@ -12,6 +13,7 @@ export function Home({ navigate }: PageProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Book[]>([]);
   const [borrowBook, setBorrowBook] = useState<Book | null>(null);
+  const [reserveBook, setReserveBook] = useState<Book | null>(null);
   const { data: dash } = useAsync(() => api.dashboard(), []);
 
   useEffect(() => {
@@ -52,7 +54,11 @@ export function Home({ navigate }: PageProps) {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: "none" }}>
                   <Badge kind={statusKind(b.availableCopies > 0 ? "Available" : "All out")}>{b.availableCopies} available</Badge>
-                  <button disabled={b.availableCopies <= 0} onClick={() => setBorrowBook(b)} style={{ padding: "9px 16px", borderRadius: "8px", border: "1px solid var(--accent, #3d6b53)", background: "var(--accent-soft, #e3ebdd)", color: "var(--accent, #3d6b53)", fontFamily: "inherit", fontSize: "13px", fontWeight: 600, cursor: b.availableCopies > 0 ? "pointer" : "not-allowed", opacity: b.availableCopies > 0 ? 1 : 0.5 }}>Borrow</button>
+                  {b.availableCopies > 0 ? (
+                    <button onClick={() => setBorrowBook(b)} style={{ padding: "9px 16px", borderRadius: "8px", border: "1px solid var(--accent, #3d6b53)", background: "var(--accent-soft, #e3ebdd)", color: "var(--accent, #3d6b53)", fontFamily: "inherit", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>Borrow</button>
+                  ) : (
+                    <button onClick={() => setReserveBook(b)} style={{ padding: "9px 16px", borderRadius: "8px", border: "1px solid var(--border-input, #ddd2b8)", background: "var(--bg-input, #fffdf7)", color: "#6f6653", fontFamily: "inherit", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>Reserve</button>
+                  )}
                 </div>
               </div>
             ))}
@@ -89,6 +95,7 @@ export function Home({ navigate }: PageProps) {
       </Card>
 
       {borrowBook && <BorrowModal book={borrowBook} onClose={() => setBorrowBook(null)} onDone={() => { setBorrowBook(null); toast("Checked out"); setQuery(query); }} />}
+      {reserveBook && <ReserveModal book={reserveBook} onClose={() => setReserveBook(null)} onDone={() => { setReserveBook(null); navigate("reservations"); }} />}
     </div>
   );
 }
@@ -109,7 +116,7 @@ function BorrowModal({ book, onClose, onDone }: { book: Book; onClose: () => voi
         <button onClick={onClose} style={ghostBtn}>Cancel</button>
         <button onClick={submit} disabled={saving} style={primaryBtn}><Icon name="check" color="var(--bg-card,#fbf7ee)" size={16} /><span>Confirm</span></button>
       </>}>
-      <Field label="Member ID"><input value={memberCode} onChange={(e) => setMemberCode(e.target.value)} placeholder="e.g. S-1042" style={{ ...inputStyle, fontFamily: "'IBM Plex Mono',monospace" }} autoFocus /></Field>
+      <Field label="Member ID"><input value={memberCode} onChange={(e) => setMemberCode(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submit(); } }} placeholder="Scan or type S-1042" style={{ ...inputStyle, fontFamily: "'IBM Plex Mono',monospace" }} autoFocus /></Field>
     </Modal>
   );
 }

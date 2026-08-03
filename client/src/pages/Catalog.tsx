@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { api } from "../api.ts";
 import { usePaginated, paginationProps } from "../hooks.ts";
 import { Card, Badge, statusKind, Pagination, Modal, Field, useToast } from "../components/ui.tsx";
+import { ReserveModal } from "../components/ReserveModal.tsx";
 import { Icon } from "../icons.tsx";
 import { thStyle, tdStyle, tdMonoStyle, primaryBtn, inputStyle, iconBtn, ghostBtn } from "../theme.ts";
 import { useAsync } from "../hooks.ts";
@@ -18,6 +19,7 @@ export function Catalog() {
   const [pageSize, setPageSize] = useState(20);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<Book | null>(null);
+  const [reserving, setReserving] = useState<Book | null>(null);
 
   const { data, loading, refresh } = usePaginated(
     (p) => api.books(p),
@@ -37,7 +39,7 @@ export function Catalog() {
         <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
           <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
             <span style={{ position: "absolute", left: "13px", display: "flex" }}><Icon name="search" color="#a89d82" size={16} /></span>
-            <input value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search by title, author, or subject" style={{ width: "340px", padding: "11px 14px 11px 40px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", fontSize: "14px", color: "#2a2620" }} />
+            <input value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search title, author, subject, accession no. or ISBN" style={{ width: "400px", padding: "11px 14px 11px 40px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", fontSize: "14px", color: "#2a2620" }} />
           </div>
           <span style={{ fontSize: "13px", color: "#8a8069" }}>{data.total} titles</span>
         </div>
@@ -58,13 +60,14 @@ export function Catalog() {
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead><tr>
-              {["Barcode", "Title", "Author", "Subject", "Available", "Shelf", "Status", ""].map((h, i) => <th key={i} style={thStyle}>{h}</th>)}
+              {["Accession No.", "Barcode", "Title", "Author", "Subject", "Available", "Shelf", "Status", ""].map((h, i) => <th key={i} style={thStyle}>{h}</th>)}
             </tr></thead>
             <tbody>
               {data.items.map((b) => {
                 const status = b.availableCopies > 0 ? "Available" : "All out";
                 return (
                   <tr key={b.id} className="lm-row">
+                    <td style={tdMonoStyle}>{b.accessionNo ?? "—"}</td>
                     <td style={tdMonoStyle}>{b.barcode}</td>
                     <td style={tdStyle}><span style={{ fontWeight: 600 }}>{b.title}</span></td>
                     <td style={tdStyle}>{b.author}</td>
@@ -73,14 +76,15 @@ export function Catalog() {
                     <td style={tdMonoStyle}>{b.shelf ?? "—"}</td>
                     <td style={tdStyle}><Badge kind={statusKind(status)}>{status}</Badge></td>
                     <td style={tdStyle}><div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                      <button style={iconBtn} onClick={() => setEditing(b)}><Icon name="edit" color="#6f6653" size={15} /></button>
-                      <button style={iconBtn} onClick={() => del(b)}><Icon name="trash" color="#a4472f" size={15} /></button>
+                      <button style={iconBtn} title="Reserve" onClick={() => setReserving(b)}><Icon name="bookmark" color="#6f6653" size={15} /></button>
+                      <button style={iconBtn} title="Edit" onClick={() => setEditing(b)}><Icon name="edit" color="#6f6653" size={15} /></button>
+                      <button style={iconBtn} title="Delete" onClick={() => del(b)}><Icon name="trash" color="#a4472f" size={15} /></button>
                     </div></td>
                   </tr>
                 );
               })}
               {!loading && data.items.length === 0 && (
-                <tr><td colSpan={8} style={{ ...tdStyle, textAlign: "center", color: "#a89d82", padding: "28px" }}>No books found.</td></tr>
+                <tr><td colSpan={9} style={{ ...tdStyle, textAlign: "center", color: "#a89d82", padding: "28px" }}>No books found.</td></tr>
               )}
             </tbody>
           </table>
@@ -95,6 +99,10 @@ export function Catalog() {
           onSaved={() => { setShowAdd(false); setEditing(null); refresh(); }}
         />
       )}
+
+      {reserving && (
+        <ReserveModal book={reserving} onClose={() => setReserving(null)} onDone={() => setReserving(null)} />
+      )}
     </div>
   );
 }
@@ -105,6 +113,7 @@ function BookModal({ book, onClose, onSaved }: { book: Book | null; onClose: () 
   const [form, setForm] = useState<BookInput>({
     title: book?.title ?? "", author: book?.author ?? "", subject: book?.subject ?? "Fiction",
     isbn: book?.isbn ?? "", totalCopies: book?.totalCopies ?? 1, shelf: book?.shelf ?? "",
+    accessionNo: book?.accessionNo ?? "",
     publicationYear: book?.publicationYear ?? null, publisher: book?.publisher ?? "", description: book?.description ?? "",
     barcode: book?.barcode ?? "",
   });
@@ -148,7 +157,10 @@ function BookModal({ book, onClose, onSaved }: { book: Book | null; onClose: () 
         <Field label="Publication Year"><input type="number" value={form.publicationYear ?? ""} onChange={(e) => set("publicationYear", e.target.value ? Number(e.target.value) : null)} placeholder="e.g. 1965" style={inputStyle} /></Field>
         <Field label="Publisher"><input value={form.publisher ?? ""} onChange={(e) => set("publisher", e.target.value)} placeholder="e.g. Ace Books" style={inputStyle} /></Field>
       </div>
-      <Field label="Barcode"><input value={form.barcode ?? ""} onChange={(e) => set("barcode", e.target.value)} placeholder="Auto-generated on save (LIB-000xxx)" style={{ ...inputStyle, fontFamily: "'IBM Plex Mono',monospace" }} /></Field>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+        <Field label="Accession Number"><input value={form.accessionNo ?? ""} onChange={(e) => set("accessionNo", e.target.value)} placeholder="Auto-assigned on save (0001)" style={{ ...inputStyle, fontFamily: "'IBM Plex Mono',monospace" }} /></Field>
+        <Field label="Barcode"><input value={form.barcode ?? ""} onChange={(e) => set("barcode", e.target.value)} placeholder="Auto-generated on save (LIB-000xxx)" style={{ ...inputStyle, fontFamily: "'IBM Plex Mono',monospace" }} /></Field>
+      </div>
       <Field label="Description / Notes"><textarea rows={3} value={form.description ?? ""} onChange={(e) => set("description", e.target.value)} placeholder="Short description or shelving notes (optional)" style={{ ...inputStyle, fontFamily: "inherit", resize: "vertical" } as CSSProperties} /></Field>
     </Modal>
   );

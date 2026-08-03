@@ -1,5 +1,5 @@
 import type {
-  Book, BookInput, Member, MemberInput, Loan, Reservation, Fine,
+  Book, BookInput, Member, MemberInput, MemberHistory, Loan, Reservation, Fine,
   StaffUser, Settings, LookupLists, DashboardStats, Paginated,
 } from "@lumen/shared";
 
@@ -66,6 +66,7 @@ export const api = {
 
   // members
   members: (p: ListParams = {}) => req<Paginated<Member>>(`/members${qs(p)}`),
+  memberHistory: (id: number) => req<MemberHistory>(`/members/${id}/history`),
   createMember: (m: MemberInput) => req<Member>("/members", { method: "POST", body: JSON.stringify(m) }),
   updateMember: (id: number, m: Partial<MemberInput>) => req<Member>(`/members/${id}`, { method: "PATCH", body: JSON.stringify(m) }),
   deleteMember: (id: number) => req<void>(`/members/${id}`, { method: "DELETE" }),
@@ -80,7 +81,8 @@ export const api = {
 
   // reservations
   reservations: (p: ListParams = {}) => req<Paginated<Reservation>>(`/reservations${qs(p)}`),
-  createReservation: (body: { bookId: number; memberId: number }) => req<Reservation>("/reservations", { method: "POST", body: JSON.stringify(body) }),
+  createReservation: (body: { bookId?: number; memberId?: number; bookBarcode?: string; memberCode?: string }) =>
+    req<Reservation>("/reservations", { method: "POST", body: JSON.stringify(body) }),
   fulfillReservation: (id: number) => req<Reservation>(`/reservations/${id}/fulfill`, { method: "POST" }),
   cancelReservation: (id: number) => req<Reservation>(`/reservations/${id}/cancel`, { method: "POST" }),
 
@@ -88,6 +90,7 @@ export const api = {
   fines: (p: ListParams = {}) => req<Paginated<Fine>>(`/fines${qs(p)}`),
   finesSummary: () => req<FinesSummary>("/fines/summary"),
   collectFine: (id: number) => req<Fine>(`/fines/${id}/collect`, { method: "POST" }),
+  waiveFine: (id: number) => req<Fine>(`/fines/${id}/waive`, { method: "POST" }),
 
   // users
   users: (p: ListParams = {}) => req<Paginated<StaffUser>>(`/users${qs(p)}`),

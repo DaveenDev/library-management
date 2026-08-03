@@ -5,8 +5,8 @@ import { Card } from "../components/ui.tsx";
 import { Icon, type IconName } from "../icons.tsx";
 import type { PageProps } from "../App.tsx";
 import type { Section } from "../nav.ts";
+import { money } from "@lumen/shared";
 
-const money = (n: number) => `$${n.toFixed(2)}`;
 const num = (n: number) => n.toLocaleString();
 
 function Stat({ label, value, note, dot, danger }: { label: string; value: string; note: string; dot: string; danger?: boolean }) {
