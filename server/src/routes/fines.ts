@@ -3,6 +3,7 @@ import { desc, eq, sql } from "drizzle-orm";
 import { db } from "../db/index.ts";
 import { fines, books, members } from "../db/schema.ts";
 import { ah, HttpError, pageParams } from "../lib/http.ts";
+import { parseId } from "../lib/validate.ts";
 
 export const finesRouter = Router();
 
@@ -57,7 +58,7 @@ finesRouter.post(
     const [row] = await db
       .update(fines)
       .set({ status: "Paid" })
-      .where(eq(fines.id, Number(req.params.id)))
+      .where(eq(fines.id, parseId(req.params.id)))
       .returning();
     if (!row) throw new HttpError(404, "fine not found");
     res.json(row);
@@ -70,7 +71,7 @@ finesRouter.post(
     const [row] = await db
       .update(fines)
       .set({ status: "Waived" })
-      .where(eq(fines.id, Number(req.params.id)))
+      .where(eq(fines.id, parseId(req.params.id)))
       .returning();
     if (!row) throw new HttpError(404, "fine not found");
     res.json(row);

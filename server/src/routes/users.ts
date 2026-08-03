@@ -3,6 +3,7 @@ import { asc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "../db/index.ts";
 import { staffUsers } from "../db/schema.ts";
 import { ah, HttpError, pageParams } from "../lib/http.ts";
+import { parseBody, parseId, staffCreateSchema } from "../lib/validate.ts";
 
 export const usersRouter = Router();
 
@@ -27,15 +28,14 @@ usersRouter.get(
 usersRouter.post(
   "/",
   ah(async (req, res) => {
-    const b = req.body ?? {};
-    if (!b.name || !b.email) throw new HttpError(400, "name and email are required");
+    const b = parseBody(staffCreateSchema, req.body);
     const [row] = await db
       .insert(staffUsers)
       .values({
-        name: String(b.name).trim(),
-        email: String(b.email).trim(),
-        role: ["Admin", "Librarian", "Assistant"].includes(b.role) ? b.role : "Assistant",
-        status: b.status === "Disabled" ? "Disabled" : "Active",
+        name: b.name,
+        email: b.email,
+        role: b.role,
+        status: b.status,
         lastActiveAt: new Date(),
       })
       .returning();
@@ -46,10 +46,10 @@ usersRouter.post(
 usersRouter.patch(
   "/:id",
   ah(async (req, res) => {
-    const b = req.body ?? {};
+    const b = parseBody(staffCreateSchema.partial(), req.body);
     const patch: Record<string, unknown> = {};
-    for (const f of ["name", "email", "role", "status"]) if (b[f] !== undefined) patch[f] = b[f];
-    const [row] = await db.update(staffUsers).set(patch).where(eq(staffUsers.id, Number(req.params.id))).returning();
+    for (const f of ["name", "email", "role", "status"] as const) if (b[f] !== undefined) patch[f] = b[f];
+    const [row] = await db.update(staffUsers).set(patch).where(eq(staffUsers.id, parseId(req.params.id))).returning();
     if (!row) throw new HttpError(404, "user not found");
     res.json(row);
   }),
@@ -58,7 +58,7 @@ usersRouter.patch(
 usersRouter.delete(
   "/:id",
   ah(async (req, res) => {
-    await db.delete(staffUsers).where(eq(staffUsers.id, Number(req.params.id)));
+    await db.delete(staffUsers).where(eq(staffUsers.id, parseId(req.params.id)));
     res.status(204).end();
   }),
 );

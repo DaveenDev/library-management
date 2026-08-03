@@ -112,6 +112,16 @@ FROM (SELECT id, row_number() OVER (ORDER BY id) AS rn FROM books WHERE accessio
 WHERE b.id = s.id AND b.accession_no IS NULL;
 `;
 
+/**
+ * Create/upgrade the schema on an arbitrary connection. Exported so the test
+ * suite can prepare its own database with exactly the same DDL rather than
+ * keeping a second copy in sync.
+ */
+export async function pushSchema(client: { unsafe: (q: string) => Promise<unknown> }): Promise<void> {
+  await client.unsafe(DDL);
+  await client.unsafe(MIGRATIONS);
+}
+
 async function main() {
   console.log("Pushing schema…");
   await queryClient.unsafe(DDL);
@@ -120,10 +130,15 @@ async function main() {
   console.log("✔ Schema is up to date.");
 }
 
-main()
-  .then(() => queryClient.end())
-  .then(() => process.exit(0))
-  .catch((err) => {
-    console.error(err);
-    queryClient.end().finally(() => process.exit(1));
-  });
+// Only run as a CLI when invoked directly (`npm run db:push`), so importing
+// this module from tests does not tear down the process.
+const invokedDirectly = process.argv[1]?.replace(/\\/g, "/").endsWith("/db/push.ts");
+if (invokedDirectly) {
+  main()
+    .then(() => queryClient.end())
+    .then(() => process.exit(0))
+    .catch((err) => {
+      console.error(err);
+      queryClient.end().finally(() => process.exit(1));
+    });
+}

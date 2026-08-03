@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "../db/index.ts";
 import { books, loans } from "../db/schema.ts";
 import { ah, HttpError, pageParams } from "../lib/http.ts";
+import { bookCreateSchema, bookUpdateSchema, parseBody, parseId } from "../lib/validate.ts";
 
 export const booksRouter = Router();
 
@@ -66,26 +67,24 @@ booksRouter.get(
 booksRouter.post(
   "/",
   ah(async (req, res) => {
-    const b = req.body ?? {};
-    if (!b.title || !b.author) throw new HttpError(400, "title and author are required");
-    const total = Math.max(1, Number(b.totalCopies) || 1);
-    const barcode = b.barcode?.trim() || (await nextBarcode());
-    const accessionNo = b.accessionNo?.trim() || (await nextAccessionNo());
+    const b = parseBody(bookCreateSchema, req.body);
+    const barcode = b.barcode || (await nextBarcode());
+    const accessionNo = b.accessionNo || (await nextAccessionNo());
     const [row] = await db
       .insert(books)
       .values({
         barcode,
         accessionNo,
-        title: String(b.title).trim(),
-        author: String(b.author).trim(),
-        subject: b.subject || "Fiction",
-        isbn: b.isbn || null,
-        totalCopies: total,
-        availableCopies: total,
-        shelf: b.shelf || null,
-        publicationYear: b.publicationYear ? Number(b.publicationYear) : null,
-        publisher: b.publisher || null,
-        description: b.description || null,
+        title: b.title,
+        author: b.author,
+        subject: b.subject,
+        isbn: b.isbn,
+        totalCopies: b.totalCopies,
+        availableCopies: b.totalCopies,
+        shelf: b.shelf,
+        publicationYear: b.publicationYear ?? null,
+        publisher: b.publisher,
+        description: b.description,
       })
       .returning();
     res.status(201).json(row);
@@ -95,21 +94,22 @@ booksRouter.post(
 booksRouter.patch(
   "/:id",
   ah(async (req, res) => {
-    const id = Number(req.params.id);
-    const b = req.body ?? {};
+    const id = parseId(req.params.id);
+    const b = parseBody(bookUpdateSchema, req.body);
     const [existing] = await db.select().from(books).where(eq(books.id, id));
     if (!existing) throw new HttpError(404, "book not found");
 
     const patch: Record<string, unknown> = {};
-    for (const f of ["title", "author", "subject", "isbn", "shelf", "publisher", "description", "accessionNo"]) {
+    for (const f of ["title", "author", "subject", "isbn", "shelf", "publisher", "description", "accessionNo"] as const) {
       if (b[f] !== undefined) patch[f] = b[f];
     }
-    if (b.publicationYear !== undefined) patch.publicationYear = b.publicationYear ? Number(b.publicationYear) : null;
+    if (b.publicationYear !== undefined) patch.publicationYear = b.publicationYear ?? null;
     if (b.totalCopies !== undefined) {
-      const newTotal = Math.max(1, Number(b.totalCopies));
-      const delta = newTotal - existing.totalCopies;
-      patch.totalCopies = newTotal;
-      patch.availableCopies = Math.max(0, existing.availableCopies + delta);
+      // Adjusting the total shifts availability by the same delta, so adding
+      // two copies while three are on loan leaves those loans intact.
+      const delta = b.totalCopies - existing.totalCopies;
+      patch.totalCopies = b.totalCopies;
+      patch.availableCopies = Math.max(0, Math.min(b.totalCopies, existing.availableCopies + delta));
     }
     const [row] = await db.update(books).set(patch).where(eq(books.id, id)).returning();
     res.json(row);
@@ -119,7 +119,7 @@ booksRouter.patch(
 booksRouter.delete(
   "/:id",
   ah(async (req, res) => {
-    const id = Number(req.params.id);
+    const id = parseId(req.params.id);
     const [open] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(loans)

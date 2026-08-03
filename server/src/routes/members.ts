@@ -3,6 +3,7 @@ import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "../db/index.ts";
 import { members, loans, fines, books } from "../db/schema.ts";
 import { ah, HttpError, pageParams } from "../lib/http.ts";
+import { memberCreateSchema, memberUpdateSchema, parseBody, parseId } from "../lib/validate.ts";
 import { getSettings } from "../lib/settings.ts";
 import { daysLate, loanStatus } from "../lib/domain.ts";
 
@@ -71,7 +72,7 @@ membersRouter.get(
 membersRouter.get(
   "/:id/history",
   ah(async (req, res) => {
-    const id = Number(req.params.id);
+    const id = parseId(req.params.id);
     const cfg = await getSettings();
     const [member] = await db.select().from(members).where(eq(members.id, id));
     if (!member) throw new HttpError(404, "member not found");
@@ -128,19 +129,17 @@ membersRouter.get(
 membersRouter.post(
   "/",
   ah(async (req, res) => {
-    const b = req.body ?? {};
-    if (!b.name) throw new HttpError(400, "name is required");
-    const type = b.type === "Faculty" ? "Faculty" : "Student";
-    const memberCode = b.memberCode?.trim() || (await nextMemberCode(type));
+    const b = parseBody(memberCreateSchema, req.body);
+    const memberCode = b.memberCode || (await nextMemberCode(b.type));
     const [row] = await db
       .insert(members)
       .values({
         memberCode,
-        name: String(b.name).trim(),
-        type,
-        gradeOrDept: b.gradeOrDept || null,
-        email: b.email || null,
-        status: b.status === "Suspended" ? "Suspended" : "Active",
+        name: b.name,
+        type: b.type,
+        gradeOrDept: b.gradeOrDept,
+        email: b.email,
+        status: b.status,
       })
       .returning();
     res.status(201).json({ ...row, booksOut: 0, finesDue: 0 });
@@ -150,10 +149,10 @@ membersRouter.post(
 membersRouter.patch(
   "/:id",
   ah(async (req, res) => {
-    const id = Number(req.params.id);
-    const b = req.body ?? {};
+    const id = parseId(req.params.id);
+    const b = parseBody(memberUpdateSchema, req.body);
     const patch: Record<string, unknown> = {};
-    for (const f of ["name", "type", "gradeOrDept", "email", "status"]) {
+    for (const f of ["name", "type", "gradeOrDept", "email", "status"] as const) {
       if (b[f] !== undefined) patch[f] = b[f];
     }
     const [row] = await db.update(members).set(patch).where(eq(members.id, id)).returning();
@@ -165,7 +164,7 @@ membersRouter.patch(
 membersRouter.delete(
   "/:id",
   ah(async (req, res) => {
-    const id = Number(req.params.id);
+    const id = parseId(req.params.id);
     const [open] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(loans)

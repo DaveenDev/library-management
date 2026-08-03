@@ -1,10 +1,9 @@
 import { Router } from "express";
 import { desc, eq, isNull, sql } from "drizzle-orm";
 import { db } from "../db/index.ts";
-import { books, members, loans, fines, reservations } from "../db/schema.ts";
+import { books, members, loans } from "../db/schema.ts";
 import { ah } from "../lib/http.ts";
 import { getSettings } from "../lib/settings.ts";
-import { loanStatus } from "../lib/domain.ts";
 import type { ActivityItem, DashboardStats } from "@lumen/shared";
 
 export const dashboardRouter = Router();
@@ -70,26 +69,28 @@ dashboardRouter.get(
       .orderBy(desc(sql`greatest(${loans.borrowedAt}, coalesce(${loans.returnedAt}, ${loans.borrowedAt}))`))
       .limit(6);
 
-    const activity: ActivityItem[] = [];
-    for (const r of recentLoans) {
-      if (r.returnedAt) {
-        activity.push({
-          kind: "neutral",
-          text: `${r.title} returned by ${r.member}`,
-          when: timeAgo(new Date(r.returnedAt)),
-          _t: new Date(r.returnedAt).getTime(),
-        } as any);
-      } else {
-        activity.push({
-          kind: "good",
-          text: `${r.member} borrowed ${r.title}`,
-          when: timeAgo(new Date(r.borrowedAt)),
-          _t: new Date(r.borrowedAt).getTime(),
-        } as any);
-      }
-    }
-    activity.sort((a: any, b: any) => b._t - a._t);
-    const recentActivity = activity.slice(0, 5).map(({ _t, ...rest }: any) => rest);
+    // `at` is a sort key only — stripped before the response goes out.
+    type ActivityEntry = ActivityItem & { at: number };
+
+    const activity: ActivityEntry[] = recentLoans.map((r) =>
+      r.returnedAt
+        ? {
+            kind: "neutral",
+            text: `${r.title} returned by ${r.member}`,
+            when: timeAgo(new Date(r.returnedAt)),
+            at: new Date(r.returnedAt).getTime(),
+          }
+        : {
+            kind: "good",
+            text: `${r.member} borrowed ${r.title}`,
+            when: timeAgo(new Date(r.borrowedAt)),
+            at: new Date(r.borrowedAt).getTime(),
+          },
+    );
+    activity.sort((a, b) => b.at - a.at);
+    const recentActivity: ActivityItem[] = activity
+      .slice(0, 5)
+      .map(({ at: _at, ...rest }) => rest);
 
     // due soon: open loans ordered by due date
     const dueSoonRows = await db
