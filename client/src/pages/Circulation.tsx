@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { api } from "../api.ts";
 import { usePaginated, paginationProps } from "../hooks.ts";
 import { Card, Badge, statusKind, Pagination, useToast } from "../components/ui.tsx";
@@ -16,6 +16,7 @@ const fmt = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: 
 
 export function Circulation() {
   const toast = useToast();
+  const ids = useId();
   const canWrite = useAuth().can("circulation:write");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -86,17 +87,17 @@ export function Circulation() {
         <Card style={{ padding: "20px 22px" }}>
           <h3 style={{ margin: "0 0 4px", fontFamily: "Spectral,serif", fontSize: "17px", fontWeight: 600 }}>Check Out</h3>
           <p style={{ margin: "0 0 16px", fontSize: "12.5px", color: "#8a8069" }}>Scan the book and the member ID</p>
-          <label style={label}>Book barcode</label>
-          <div style={{ ...scanBox, marginBottom: "14px" }}><Icon name="scan" color="#8a8069" size={17} /><input ref={bookRef} value={bookBarcode} onChange={(e) => setBookBarcode(e.target.value)} onKeyDown={onBookKey} placeholder="Scan or type LIB-000000" style={scanInput} autoFocus /></div>
-          <label style={label}>Member ID</label>
-          <div style={{ ...scanBox, marginBottom: "18px" }}><Icon name="scan" color="#8a8069" size={17} /><input ref={memberRef} value={memberCode} onChange={(e) => setMemberCode(e.target.value)} onKeyDown={onMemberKey} placeholder="Scan or type S-0000" style={scanInput} /></div>
+          <label htmlFor={`${ids}-book`} style={label}>Book barcode</label>
+          <div style={{ ...scanBox, marginBottom: "14px" }}><Icon name="scan" color="#8a8069" size={17} /><input id={`${ids}-book`} ref={bookRef} value={bookBarcode} onChange={(e) => setBookBarcode(e.target.value)} onKeyDown={onBookKey} placeholder="Scan or type LIB-000000" style={scanInput} autoFocus /></div>
+          <label htmlFor={`${ids}-member`} style={label}>Member ID</label>
+          <div style={{ ...scanBox, marginBottom: "18px" }}><Icon name="scan" color="#8a8069" size={17} /><input id={`${ids}-member`} ref={memberRef} value={memberCode} onChange={(e) => setMemberCode(e.target.value)} onKeyDown={onMemberKey} placeholder="Scan or type S-0000" style={scanInput} /></div>
           <button onClick={checkout} style={primaryBtnWide}><Icon name="check" color="var(--bg-card,#fbf7ee)" size={16} /><span>Confirm Check Out</span></button>
         </Card>
         <Card style={{ padding: "20px 22px" }}>
           <h3 style={{ margin: "0 0 4px", fontFamily: "Spectral,serif", fontSize: "17px", fontWeight: 600 }}>Check In / Return</h3>
           <p style={{ margin: "0 0 16px", fontSize: "12.5px", color: "#8a8069" }}>Scan a returning book to log it</p>
-          <label style={label}>Book barcode</label>
-          <div style={{ ...scanBox, marginBottom: "14px" }}><Icon name="scan" color="#8a8069" size={17} /><input ref={returnRef} value={returnBarcode} onChange={(e) => setReturnBarcode(e.target.value)} onKeyDown={onReturnKey} placeholder="Scan or type LIB-000000" style={scanInput} /></div>
+          <label htmlFor={`${ids}-return`} style={label}>Book barcode</label>
+          <div style={{ ...scanBox, marginBottom: "14px" }}><Icon name="scan" color="#8a8069" size={17} /><input id={`${ids}-return`} ref={returnRef} value={returnBarcode} onChange={(e) => setReturnBarcode(e.target.value)} onKeyDown={onReturnKey} placeholder="Scan or type LIB-000000" style={scanInput} /></div>
           <div style={{ background: "var(--bg-soft, #f3edda)", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", padding: "12px 14px", marginBottom: "18px", fontSize: "13px", color: "#6f6653" }}>
             Late returns automatically compute a fine at the configured daily rate.
           </div>

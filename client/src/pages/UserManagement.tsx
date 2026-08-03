@@ -61,7 +61,7 @@ export function UserManagement() {
       <Card style={{ padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
         <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
           <span style={{ position: "absolute", left: "13px", display: "flex" }}><Icon name="search" color="#a89d82" size={16} /></span>
-          <input value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search staff by name or email" style={{ width: "340px", padding: "11px 14px 11px 40px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", fontSize: "14px", color: "#2a2620" }} />
+          <input type="search" aria-label="Search staff" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search staff by name or email" style={{ width: "340px", padding: "11px 14px 11px 40px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", fontSize: "14px", color: "#2a2620" }} />
         </div>
         <button onClick={() => setShowAdd(true)} style={primaryBtn}><Icon name="plus" color="var(--bg-card,#fbf7ee)" size={16} /><span>Add User</span></button>
       </Card>
@@ -79,11 +79,11 @@ export function UserManagement() {
                   <td style={tdStyle}><Badge kind={statusKind(u.status)}>{u.status}</Badge></td>
                   <td style={tdStyle}>{fmtLast(u.lastActiveAt)}</td>
                   <td style={tdStyle}><div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                    <button style={iconBtn} title="Set password" onClick={() => setPassword(u)}><Icon name="shield" color="#6f6653" size={15} /></button>
+                    <button style={iconBtn} title="Set password" aria-label={`Set password for ${u.name}`} onClick={() => setPassword(u)}><Icon name="shield" color="#6f6653" size={15} /></button>
                     {/* Removing your own account is refused by the server; not
                         offering the button is friendlier than the error. */}
                     {u.id !== me?.id && (
-                      <button style={iconBtn} title="Remove user" onClick={() => del(u)}><Icon name="trash" color="#a4472f" size={15} /></button>
+                      <button style={iconBtn} title="Remove user" aria-label={`Remove ${u.name}`} onClick={() => del(u)}><Icon name="trash" color="#a4472f" size={15} /></button>
                     )}
                   </div></td>
                 </tr>

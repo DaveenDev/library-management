@@ -54,7 +54,7 @@ export function Catalog({ initialQuery }: { initialQuery?: { text: string; nonce
         <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
           <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
             <span style={{ position: "absolute", left: "13px", display: "flex" }}><Icon name="search" color="#a89d82" size={16} /></span>
-            <input value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search title, author, subject, accession no. or ISBN" style={{ width: "400px", padding: "11px 14px 11px 40px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", fontSize: "14px", color: "#2a2620" }} />
+            <input type="search" aria-label="Search the catalog" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search title, author, subject, accession no. or ISBN" style={{ width: "400px", padding: "11px 14px 11px 40px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", fontSize: "14px", color: "#2a2620" }} />
           </div>
           <span style={{ fontSize: "13px", color: "#8a8069" }}>{data.total} titles</span>
         </div>
@@ -91,9 +91,9 @@ export function Catalog({ initialQuery }: { initialQuery?: { text: string; nonce
                     <td style={tdMonoStyle}>{b.shelf ?? "—"}</td>
                     <td style={tdStyle}><Badge kind={statusKind(status)}>{status}</Badge></td>
                     <td style={tdStyle}><div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                      {canCirculate && <button style={iconBtn} title="Reserve" onClick={() => setReserving(b)}><Icon name="bookmark" color="#6f6653" size={15} /></button>}
-                      {canWrite && <button style={iconBtn} title="Edit" onClick={() => setEditing(b)}><Icon name="edit" color="#6f6653" size={15} /></button>}
-                      {canWrite && <button style={iconBtn} title="Delete" onClick={() => del(b)}><Icon name="trash" color="#a4472f" size={15} /></button>}
+                      {canCirculate && <button style={iconBtn} title="Reserve" aria-label={`Reserve ${b.title}`} onClick={() => setReserving(b)}><Icon name="bookmark" color="#6f6653" size={15} /></button>}
+                      {canWrite && <button style={iconBtn} title="Edit" aria-label={`Edit ${b.title}`} onClick={() => setEditing(b)}><Icon name="edit" color="#6f6653" size={15} /></button>}
+                      {canWrite && <button style={iconBtn} title="Delete" aria-label={`Delete ${b.title}`} onClick={() => del(b)}><Icon name="trash" color="#a4472f" size={15} /></button>}
                     </div></td>
                   </tr>
                 );

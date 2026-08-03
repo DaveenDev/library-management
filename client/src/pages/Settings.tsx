@@ -106,12 +106,12 @@ function ChipCard({ title, note, kind, values, onChange, placeholder, mono, edit
         {values.map((text) => (
           <span key={text} style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 6px 6px 12px", borderRadius: "20px", background: "var(--bg-soft, #f3edda)", border: "1px solid var(--border-input, #ddd2b8)", fontSize: "13px", color: "#3a352c", fontFamily: mono ? "'IBM Plex Mono',monospace" : "inherit" }}>
             {text}
-            {editable && <button onClick={() => remove(text)} style={{ width: "18px", height: "18px", borderRadius: "50%", border: "none", background: "var(--border-card, #e4dcc6)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}><Icon name="x" color="#6f6653" size={11} /></button>}
+            {editable && <button onClick={() => remove(text)} aria-label={`Remove ${text}`} style={{ width: "18px", height: "18px", borderRadius: "50%", border: "none", background: "var(--border-card, #e4dcc6)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}><Icon name="x" color="#6f6653" size={11} /></button>}
           </span>
         ))}
       </div>
       {editable && <div style={{ display: "flex", gap: "8px", marginTop: "14px" }}>
-        <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }} placeholder={placeholder} style={{ flex: 1, padding: "9px 12px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "8px", background: "var(--bg-input, #fffdf7)", fontSize: "13.5px", color: "#2a2620", fontFamily: mono ? "'IBM Plex Mono',monospace" : "inherit" }} />
+        <input value={input} aria-label={`Add to ${title}`} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }} placeholder={placeholder} style={{ flex: 1, padding: "9px 12px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "8px", background: "var(--bg-input, #fffdf7)", fontSize: "13.5px", color: "#2a2620", fontFamily: mono ? "'IBM Plex Mono',monospace" : "inherit" }} />
         <button onClick={add} style={{ padding: "0 14px", borderRadius: "8px", border: "1px solid var(--accent, #3d6b53)", background: "var(--accent-soft, #e3ebdd)", color: "var(--accent, #3d6b53)", fontFamily: "inherit", fontSize: "13.5px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}><Icon name="plus" color="var(--accent, #3d6b53)" size={14} /><span>Add</span></button>
       </div>}
     </Card>

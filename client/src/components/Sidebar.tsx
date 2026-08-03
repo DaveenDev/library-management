@@ -28,7 +28,7 @@ export function Sidebar({
   return (
     <aside style={{ width: "216px", flex: "none", height: "100vh", background: "var(--bg-sidebar, #eae1cb)", borderRight: "1px solid var(--border-sidebar, #dbd0b5)", display: "flex", flexDirection: "column", padding: "20px 11px 14px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "4px 10px 22px" }}>
-        <div style={brandStyle}>L</div>
+        <div style={brandStyle} aria-hidden="true">L</div>
         <div>
           <div style={{ fontFamily: "Spectral,serif", fontWeight: 600, fontSize: "19px", color: "#2a2620", lineHeight: 1 }}>Lumen</div>
           <div style={{ fontSize: "10.5px", color: "#8a8069", letterSpacing: ".11em", textTransform: "uppercase", marginTop: "3px" }}>Library System</div>
@@ -36,11 +36,11 @@ export function Sidebar({
       </div>
 
       <div style={sectionLabel}>Main Menu</div>
-      <nav style={{ display: "flex", flexDirection: "column", gap: "3px", flex: 1, minHeight: 0, overflowY: "auto", margin: "0 -4px", padding: "0 4px" }}>
+      <nav aria-label="Main" style={{ display: "flex", flexDirection: "column", gap: "3px", flex: 1, minHeight: 0, overflowY: "auto", margin: "0 -4px", padding: "0 4px" }}>
         {NAV_ITEMS.map(([key, label, icon]) => {
           const active = section === key;
           return (
-            <button key={key} className="lm-hover" style={navBtn(active)} onClick={() => onNavigate(key)}>
+            <button key={key} className="lm-hover" aria-current={active ? "page" : undefined} style={navBtn(active)} onClick={() => onNavigate(key)}>
               <Icon name={icon as IconName} color={active ? accent : "#8a8069"} size={18} />
               <span>{label}</span>
             </button>
@@ -53,7 +53,7 @@ export function Sidebar({
         }).map(([key, label, icon]) => {
           const active = section === key;
           return (
-            <button key={key} className="lm-hover" style={navBtn(active, true)} onClick={() => onNavigate(key)}>
+            <button key={key} className="lm-hover" aria-current={active ? "page" : undefined} style={navBtn(active, true)} onClick={() => onNavigate(key)}>
               <Icon name={icon as IconName} color={active ? accent : "#8a8069"} size={15} />
               <span>{label}</span>
             </button>
@@ -70,6 +70,7 @@ export function Sidebar({
         <button
           onClick={signOut}
           title="Sign out"
+          aria-label={`Sign out ${user?.name ?? ""}`.trim()}
           style={{ width: "30px", height: "30px", flex: "none", borderRadius: "8px", border: "1px solid var(--border-input, #ddd2b8)", background: "var(--bg-input, #fffdf7)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
         >
           <Icon name="signOut" color="#6f6653" size={15} />

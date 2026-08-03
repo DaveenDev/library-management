@@ -31,7 +31,7 @@ export function Borrowers() {
       <Card style={{ padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
         <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
           <span style={{ position: "absolute", left: "13px", display: "flex" }}><Icon name="search" color="#a89d82" size={16} /></span>
-          <input value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search members by name or ID" style={{ width: "340px", padding: "11px 14px 11px 40px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", fontSize: "14px", color: "#2a2620" }} />
+          <input type="search" aria-label="Search borrowers" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search members by name or ID" style={{ width: "340px", padding: "11px 14px 11px 40px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", fontSize: "14px", color: "#2a2620" }} />
         </div>
         {canWrite && <button onClick={() => setShowAdd(true)} style={primaryBtn}><Icon name="plus" color="var(--bg-card,#fbf7ee)" size={16} /><span>New Member</span></button>}
       </Card>
@@ -53,9 +53,9 @@ export function Borrowers() {
                   <td style={tdStyle}>{money(m.finesDue)}</td>
                   <td style={tdStyle}><Badge kind={statusKind(m.status)}>{m.status}</Badge></td>
                   <td style={tdStyle}><div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                    <button style={iconBtn} title="Borrowing history" onClick={() => setViewing(m)}><Icon name="file" color="#6f6653" size={15} /></button>
-                    {canWrite && <button style={iconBtn} title="Edit" onClick={() => setEditing(m)}><Icon name="edit" color="#6f6653" size={15} /></button>}
-                    {canWrite && <button style={iconBtn} title="Delete" onClick={() => del(m)}><Icon name="trash" color="#a4472f" size={15} /></button>}
+                    <button style={iconBtn} title="Borrowing history" aria-label={`Borrowing history for ${m.name}`} onClick={() => setViewing(m)}><Icon name="file" color="#6f6653" size={15} /></button>
+                    {canWrite && <button style={iconBtn} title="Edit" aria-label={`Edit ${m.name}`} onClick={() => setEditing(m)}><Icon name="edit" color="#6f6653" size={15} /></button>}
+                    {canWrite && <button style={iconBtn} title="Delete" aria-label={`Delete ${m.name}`} onClick={() => del(m)}><Icon name="trash" color="#a4472f" size={15} /></button>}
                   </div></td>
                 </tr>
               ))}

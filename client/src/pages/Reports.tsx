@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from "react";
+import { useId, useState, type CSSProperties } from "react";
 import { api } from "../api.ts";
 import { useAsync } from "../hooks.ts";
 import { Icon } from "../icons.tsx";
@@ -51,6 +51,7 @@ const exportCell = (key: string, raw: string | undefined): string | number => {
 };
 
 export function Reports() {
+  const periodIds = useId();
   const [tab, setTab] = useState("overdue");
   const [from, setFrom] = useState(iso(new Date(today.getFullYear(), today.getMonth() - 1, today.getDate())));
   const [to, setTo] = useState(iso(today));
@@ -156,16 +157,16 @@ export function Reports() {
         </div>
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
           <div style={{ position: "relative" }}>
-            <button onClick={() => setShowPill((v) => !v)} style={{ ...pillBtn, fontWeight: 600 }}><Icon name="calendar" color="#3a352c" size={15} /><span>{fmtLabel(from)} – {fmtLabel(to)}</span></button>
+            <button onClick={() => setShowPill((v) => !v)} aria-expanded={showPill} style={{ ...pillBtn, fontWeight: 600 }}><Icon name="calendar" color="#3a352c" size={15} /><span>{fmtLabel(from)} – {fmtLabel(to)}</span></button>
             {showPill && (
               <>
                 <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={() => setShowPill(false)} />
                 <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, zIndex: 41, background: "var(--bg-card, #fbf7ee)", border: "1px solid var(--border-card, #e4dcc6)", borderRadius: "13px", boxShadow: "0 16px 40px rgba(30,26,20,.22)", padding: "16px 18px", width: "250px" }}>
                   <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "#a89d82", marginBottom: "10px" }}>Report Period</div>
-                  <label style={{ fontSize: "12.5px", color: "#6f6653", display: "block", marginBottom: "5px" }}>From</label>
-                  <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} style={{ width: "100%", padding: "9px 12px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "8px", background: "var(--bg-input, #fffdf7)", fontSize: "13px", color: "#2a2620", marginBottom: "12px" }} />
-                  <label style={{ fontSize: "12.5px", color: "#6f6653", display: "block", marginBottom: "5px" }}>To</label>
-                  <input type="date" value={to} onChange={(e) => setTo(e.target.value)} style={{ width: "100%", padding: "9px 12px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "8px", background: "var(--bg-input, #fffdf7)", fontSize: "13px", color: "#2a2620" }} />
+                  <label htmlFor={`${periodIds}-from`} style={{ fontSize: "12.5px", color: "#6f6653", display: "block", marginBottom: "5px" }}>From</label>
+                  <input id={`${periodIds}-from`} type="date" value={from} onChange={(e) => setFrom(e.target.value)} style={{ width: "100%", padding: "9px 12px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "8px", background: "var(--bg-input, #fffdf7)", fontSize: "13px", color: "#2a2620", marginBottom: "12px" }} />
+                  <label htmlFor={`${periodIds}-to`} style={{ fontSize: "12.5px", color: "#6f6653", display: "block", marginBottom: "5px" }}>To</label>
+                  <input id={`${periodIds}-to`} type="date" value={to} onChange={(e) => setTo(e.target.value)} style={{ width: "100%", padding: "9px 12px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "8px", background: "var(--bg-input, #fffdf7)", fontSize: "13px", color: "#2a2620" }} />
                 </div>
               </>
             )}

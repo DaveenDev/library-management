@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { api } from "../api.ts";
 import { useAsync } from "../hooks.ts";
 import { Card } from "../components/ui.tsx";
@@ -22,6 +22,7 @@ const callNumber = (subject: string, author: string) =>
   `${subject.slice(0, 3).toUpperCase()} ${(author.split(" ").slice(-1)[0] ?? "").slice(0, 3).toUpperCase()}`;
 
 export function Labels() {
+  const fieldIds = useId();
   const [source, setSource] = useState<Source>("books");
   const [type, setType] = useState<LabelType>("spine");
   const [qty, setQty] = useState(12);
@@ -61,8 +62,12 @@ export function Labels() {
   const perPage = type === "spine" ? 24 : 40;
   const pages = Math.ceil(count / perPage);
 
+  // These were <span onClick>, which no keyboard can reach and no screen
+  // reader announces as a control. They are real buttons now; `pill` carries
+  // the resets a button needs to keep looking like a pill.
   const pill = (active: boolean) => ({
     flex: 1,
+    fontFamily: "inherit" as const,
     textAlign: "center" as const,
     padding: "9px",
     borderRadius: "9px",
@@ -80,36 +85,38 @@ export function Labels() {
         <h3 style={{ margin: "0 0 4px", fontFamily: "Spectral,serif", fontSize: "17px", fontWeight: 600 }}>Generate Labels</h3>
         <p style={{ margin: "0 0 18px", fontSize: "12.5px", color: "#8a8069" }}>Scannable Code 128 and QR labels</p>
 
-        <label style={labelStyle}>Label for</label>
-        <div style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
-          <span onClick={() => setSource("books")} style={pill(source === "books")}>Books</span>
-          <span onClick={() => setSource("borrowers")} style={pill(source === "borrowers")}>Borrower IDs</span>
+        {/* A group of buttons, not a form control — a <label> here would point
+            at nothing, so it labels the group instead. */}
+        <div id={`${fieldIds}-source`} style={labelStyle}>Label for</div>
+        <div role="group" aria-labelledby={`${fieldIds}-source`} style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
+          <button type="button" aria-pressed={source === "books"} onClick={() => setSource("books")} style={pill(source === "books")}>Books</button>
+          <button type="button" aria-pressed={source === "borrowers"} onClick={() => setSource("borrowers")} style={pill(source === "borrowers")}>Borrower IDs</button>
         </div>
 
         {source === "books" ? (
           <>
-            <label style={labelStyle}>Title</label>
-            <select value={book?.id ?? ""} onChange={(e) => setBookId(Number(e.target.value))} style={{ ...inputStyle, marginBottom: "14px" }}>
+            <label htmlFor={`${fieldIds}-book`} style={labelStyle}>Title</label>
+            <select id={`${fieldIds}-book`} value={book?.id ?? ""} onChange={(e) => setBookId(Number(e.target.value))} style={{ ...inputStyle, marginBottom: "14px" }}>
               {books.map((b) => <option key={b.id} value={b.id}>{b.title} — {b.author}</option>)}
             </select>
           </>
         ) : (
           <>
-            <label style={labelStyle}>Borrower</label>
-            <select value={member?.id ?? ""} onChange={(e) => setMemberId(Number(e.target.value))} style={{ ...inputStyle, marginBottom: "14px" }}>
+            <label htmlFor={`${fieldIds}-member`} style={labelStyle}>Borrower</label>
+            <select id={`${fieldIds}-member`} value={member?.id ?? ""} onChange={(e) => setMemberId(Number(e.target.value))} style={{ ...inputStyle, marginBottom: "14px" }}>
               {members.map((m) => <option key={m.id} value={m.id}>{m.memberCode} — {m.name}</option>)}
             </select>
           </>
         )}
 
-        <label style={labelStyle}>Label type</label>
-        <div style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
-          <span onClick={() => setType("spine")} style={pill(type === "spine")}>Spine + Barcode</span>
-          <span onClick={() => setType("qr")} style={pill(type === "qr")}>QR Pocket</span>
+        <div id={`${fieldIds}-type`} style={labelStyle}>Label type</div>
+        <div role="group" aria-labelledby={`${fieldIds}-type`} style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
+          <button type="button" aria-pressed={type === "spine"} onClick={() => setType("spine")} style={pill(type === "spine")}>Spine + Barcode</button>
+          <button type="button" aria-pressed={type === "qr"} onClick={() => setType("qr")} style={pill(type === "qr")}>QR Pocket</button>
         </div>
 
-        <label style={labelStyle}>Quantity</label>
-        <input type="number" min={1} max={120} value={qty} onChange={(e) => setQty(Number(e.target.value))} style={{ ...inputStyle, marginBottom: "8px" }} />
+        <label htmlFor={`${fieldIds}-qty`} style={labelStyle}>Quantity</label>
+        <input id={`${fieldIds}-qty`} type="number" min={1} max={120} value={qty} onChange={(e) => setQty(Number(e.target.value))} style={{ ...inputStyle, marginBottom: "8px" }} />
         <p style={{ margin: "0 0 18px", fontSize: "12px", color: "#8a8069" }}>
           {count} label{count === 1 ? "" : "s"} · {perPage} per sheet · {pages} page{pages === 1 ? "" : "s"}
         </p>

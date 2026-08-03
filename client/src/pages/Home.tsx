@@ -50,9 +50,9 @@ export function Home({ navigate }: PageProps) {
         <p style={{ margin: "0 0 20px", fontSize: "13.5px", color: "#8a8069" }}>Search by title, author, subject, or scan a barcode</p>
         <div style={{ position: "relative", display: "flex", alignItems: "center", maxWidth: "640px", margin: "0 auto" }}>
           <span style={{ position: "absolute", left: "18px", display: "flex" }}><Icon name="search" color="#a89d82" size={18} /></span>
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search the catalog, e.g. “Dune” or LIB-000845" style={{ width: "100%", padding: "16px 50px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "12px", background: "var(--bg-input, #fffdf7)", fontSize: "16px", color: "#2a2620" }} />
+          <input type="search" aria-label="Search the catalog" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search the catalog, e.g. “Dune” or LIB-000845" style={{ width: "100%", padding: "16px 50px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "12px", background: "var(--bg-input, #fffdf7)", fontSize: "16px", color: "#2a2620" }} />
           {query && (
-            <button onClick={() => setQuery("")} style={{ position: "absolute", right: "14px", width: "28px", height: "28px", borderRadius: "50%", border: "none", background: "var(--border-row, #efe8d5)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}><Icon name="x" color="#6f6653" size={14} /></button>
+            <button onClick={() => setQuery("")} aria-label="Clear search" style={{ position: "absolute", right: "14px", width: "28px", height: "28px", borderRadius: "50%", border: "none", background: "var(--border-row, #efe8d5)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}><Icon name="x" color="#6f6653" size={14} /></button>
           )}
         </div>
       </Card>

@@ -32,6 +32,8 @@ export function Topbar({
         <div style={{ display: "flex", alignItems: "center", gap: "9px", background: "var(--bg-card, #fbf7ee)", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", padding: "7px 14px", width: "270px" }}>
           <Icon name="search" color="#a89d82" size={16} />
           <input
+            type="search"
+            aria-label="Search the whole system"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submitSearch(); } }}
@@ -41,11 +43,11 @@ export function Topbar({
             style={{ border: "none", background: "transparent", outline: "none", fontSize: "13.5px", color: "#2a2620", width: "100%", fontFamily: "inherit" }}
           />
         </div>
-        <button title="No new notifications" style={{ ...squareBtn, cursor: "default" }}>
+        <button title="No new notifications" aria-label="Notifications — none new" style={{ ...squareBtn, cursor: "default" }}>
           <Icon name="bell" color="#6f6653" size={17} />
         </button>
         <div style={{ position: "relative" }}>
-          <button title="Appearance" onClick={() => setShowPanel((v) => !v)} style={squareBtn}>
+          <button title="Appearance" aria-label="Appearance" aria-expanded={showPanel} onClick={() => setShowPanel((v) => !v)} style={squareBtn}>
             <span style={{ width: "18px", height: "18px", borderRadius: "50%", background: accent, border: "2px solid var(--bg-input, #fffdf7)", boxShadow: "0 0 0 1px var(--border-input, #ddd2b8)" }} />
           </button>
           {showPanel && (
@@ -55,7 +57,7 @@ export function Topbar({
                 <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "#a89d82", marginBottom: "9px" }}>Theme</div>
                 <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
                   {(Object.keys(THEMES) as ThemeKey[]).map((key) => (
-                    <button key={key} title={key} onClick={() => onTheme(key)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "5px", background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>
+                    <button key={key} title={key} aria-label={`${key} theme`} aria-pressed={theme === key} onClick={() => onTheme(key)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "5px", background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>
                       <span style={{ width: "30px", height: "30px", borderRadius: "50%", background: THEMES[key].swatch, border: "2px solid var(--border-input, #ddd2b8)", boxShadow: theme === key ? `0 0 0 2px var(--bg-card,#fbf7ee), 0 0 0 4px ${accent}` : "none" }} />
                       <span style={{ fontSize: "10.5px", color: "#6f6653", textTransform: "capitalize" }}>{key}</span>
                     </button>
@@ -64,7 +66,7 @@ export function Topbar({
                 <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "#a89d82", marginBottom: "9px" }}>Accent</div>
                 <div style={{ display: "flex", gap: "10px" }}>
                   {ACCENTS.map((ac) => (
-                    <button key={ac.key} onClick={() => onAccent(ac.color)} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>
+                    <button key={ac.key} aria-label={`${ac.key} accent`} aria-pressed={accent === ac.color} onClick={() => onAccent(ac.color)} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>
                       <span style={{ width: "26px", height: "26px", borderRadius: "50%", background: ac.color, display: "block", boxShadow: accent === ac.color ? `0 0 0 2px var(--bg-card,#fbf7ee), 0 0 0 4px ${ac.color}` : "none" }} />
                     </button>
                   ))}
@@ -73,7 +75,7 @@ export function Topbar({
             </>
           )}
         </div>
-        <div style={avatarStyle} title={`${user?.name} · ${user?.role}`}>{user?.initials}</div>
+        <div style={avatarStyle} title={`${user?.name} · ${user?.role}`} aria-hidden="true">{user?.initials}</div>
       </div>
     </header>
   );

@@ -40,6 +40,10 @@ export function Icon({
 }) {
   return (
     <svg
+      // Every icon in this app sits beside a visible label or an aria-label on
+      // its button, so announcing the graphic itself would only duplicate.
+      aria-hidden="true"
+      focusable="false"
       width={size}
       height={size}
       viewBox="0 0 24 24"
