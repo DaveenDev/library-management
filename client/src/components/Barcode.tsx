@@ -40,23 +40,21 @@ export function Barcode({
 const qrCache = new Map<string, string>();
 
 export function QrCode({ value, size = 104 }: { value: string; size?: number }) {
-  const [svg, setSvg] = useState<string>(() => qrCache.get(value) ?? "");
+  // Held with the value it was generated from, so a changed `value` reads as
+  // "nothing yet" rather than briefly showing the previous code. That makes
+  // the markup derivable during render: the cache first, then this state if
+  // it still matches, otherwise empty — and the effect only has to set state
+  // once the encode resolves, never synchronously.
+  const [generated, setGenerated] = useState<{ value: string; svg: string }>({ value: "", svg: "" });
+  const svg = qrCache.get(value) ?? (generated.value === value ? generated.svg : "");
 
   useEffect(() => {
-    const cached = qrCache.get(value);
-    if (cached) {
-      setSvg(cached);
-      return;
-    }
-    if (!value) {
-      setSvg("");
-      return;
-    }
+    if (!value || qrCache.has(value)) return;
     let cancelled = false;
     QRCode.toString(value, { type: "svg", margin: 0, errorCorrectionLevel: "M" })
       .then((s) => {
         qrCache.set(value, s);
-        if (!cancelled) setSvg(s);
+        if (!cancelled) setGenerated({ value, svg: s });
       })
       .catch(() => {});
     return () => {

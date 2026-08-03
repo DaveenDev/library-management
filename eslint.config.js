@@ -53,12 +53,6 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      // KNOWN FOLLOW-UP: several pages seed form state from a fetched value
-      // inside an effect (Settings, Catalog, Borrowers). The correct fix is to
-      // derive the state or key the component on the loaded data rather than
-      // syncing it. Left as a warning so it stays visible without blocking CI
-      // on a pre-existing pattern.
-      "react-hooks/set-state-in-effect": "warn",
     },
   },
   {

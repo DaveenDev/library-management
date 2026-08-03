@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { CSSProperties } from "react";
 import { api } from "../api.ts";
 import { usePaginated, paginationProps } from "../hooks.ts";
@@ -11,6 +11,15 @@ import type { Book, BookInput } from "@lumen/shared";
 import { errorMessage } from "../lib/errors.ts";
 import { useAuth } from "../auth.tsx";
 
+/**
+ * The topbar search lands here, since Catalog already searches title, author,
+ * subject, accession no., barcode and ISBN.
+ *
+ * App keys this component on the search nonce, so a topbar search remounts it
+ * with the query as its initial state rather than syncing the box, the
+ * subject filter and the page number from a prop inside an effect. That also
+ * means searching the same text twice still resets the view.
+ */
 export function Catalog({ initialQuery }: { initialQuery?: { text: string; nonce: number } }) {
   const toast = useToast();
   const { can } = useAuth();
@@ -23,18 +32,6 @@ export function Catalog({ initialQuery }: { initialQuery?: { text: string; nonce
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<Book | null>(null);
   const [reserving, setReserving] = useState<Book | null>(null);
-
-  // The topbar search lands here (Catalog already covers title / author /
-  // subject / accession no. / barcode / ISBN). The nonce lets a second
-  // topbar search overwrite the query even if the text is identical to
-  // what's already in the box.
-  useEffect(() => {
-    if (initialQuery === undefined) return;
-    setQ(initialQuery.text);
-    setSubject("All");
-    setPage(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialQuery?.nonce]);
 
   const { data, loading, refresh } = usePaginated(
     (p) => api.books(p),

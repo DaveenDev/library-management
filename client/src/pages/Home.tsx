@@ -13,31 +13,41 @@ import { useAuth } from "../auth.tsx";
 export function Home({ navigate }: PageProps) {
   const canCirculate = useAuth().can("circulation:write");
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Book[]>([]);
+  // Results are held with the query they answer. Deriving from that means a
+  // half-typed query shows nothing instead of the previous query's matches,
+  // without the effect having to clear results synchronously on every
+  // keystroke.
+  const [found, setFound] = useState<{ query: string; items: Book[] }>({ query: "", items: [] });
   const [borrowBook, setBorrowBook] = useState<Book | null>(null);
   const [reserveBook, setReserveBook] = useState<Book | null>(null);
   const { data: dash, refresh: refreshDash } = useAsync(() => api.dashboard(), []);
 
-  const runSearch = (q: string) => {
-    if (!q) { setResults([]); return; }
-    api.books({ q, pageSize: 5 }).then((r) => setResults(r.items)).catch(() => {});
+  const q = query.trim();
+  const results = found.query === q ? found.items : [];
+
+  const runSearch = (search: string) => {
+    if (!search) return;
+    api.books({ q: search, pageSize: 5 })
+      .then((r) => setFound({ query: search, items: r.items }))
+      .catch(() => {});
   };
 
   useEffect(() => {
-    const q = query.trim();
-    if (!q) { setResults([]); return; }
+    if (!q) return;
     let cancelled = false;
     const t = setTimeout(() => {
-      api.books({ q, pageSize: 5 }).then((r) => { if (!cancelled) setResults(r.items); }).catch(() => {});
+      api.books({ q, pageSize: 5 })
+        .then((r) => { if (!cancelled) setFound({ query: q, items: r.items }); })
+        .catch(() => {});
     }, 200);
     return () => { cancelled = true; clearTimeout(t); };
-  }, [query]);
+  }, [q]);
 
   // After a borrow/reserve completes, availableCopies and "Just Happened"
   // both need a fresh fetch. setQuery(query) alone would not re-run the
   // debounced effect above since React bails out on an unchanged string.
   const refreshAfterAction = () => {
-    runSearch(query.trim());
+    runSearch(q);
     refreshDash();
   };
 

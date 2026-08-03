@@ -107,7 +107,7 @@ function Workspace() {
     switch (section) {
       case "home": return <Home navigate={navigate} />;
       case "dashboard": return <Dashboard navigate={navigate} />;
-      case "catalog": return <Catalog initialQuery={catalogQuery} />;
+      case "catalog": return <Catalog key={catalogQuery?.nonce ?? "catalog"} initialQuery={catalogQuery} />;
       case "borrowers": return <Borrowers />;
       case "circulation": return <Circulation />;
       case "reservations": return <Reservations />;

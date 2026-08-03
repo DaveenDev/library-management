@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { api } from "../api.ts";
+import { useState } from "react";
+import { api, type SettingsResponse } from "../api.ts";
 import { useAsync } from "../hooks.ts";
 import { Card, Field, useToast } from "../components/ui.tsx";
 import { Icon } from "../icons.tsx";
@@ -9,22 +9,28 @@ import { errorMessage } from "../lib/errors.ts";
 import { useAuth } from "../auth.tsx";
 
 export function Settings() {
+  const { data, loading } = useAsync(() => api.settings(), []);
+
+  // The form is mounted only once its values exist, so it can initialise
+  // state from them directly. Seeding placeholder state and then overwriting
+  // it from an effect was both an extra render and a window in which the page
+  // showed numbers that were not the library's.
+  if (loading || !data) return <div style={{ color: "#8a8069" }}>Loading settings…</div>;
+  return <SettingsForm settings={data} />;
+}
+
+function SettingsForm({ settings }: { settings: SettingsResponse }) {
   const toast = useToast();
   const canWrite = useAuth().can("settings:write");
-  const { data, loading } = useAsync(() => api.settings(), []);
-  const [form, setForm] = useState({ dailyFineRate: "0.50", gracePeriodDays: "2", maxFineCap: "15.00", autoSuspendDays: "14", emailReminders: true, loanPeriodDays: "14" });
-  const [lists, setLists] = useState<LookupLists>({ shelves: [], subjects: [], grades: [], sections: [] });
-
-  useEffect(() => {
-    if (data) {
-      setForm({
-        dailyFineRate: data.dailyFineRate.toFixed(2), gracePeriodDays: String(data.gracePeriodDays),
-        maxFineCap: data.maxFineCap.toFixed(2), autoSuspendDays: String(data.autoSuspendDays),
-        emailReminders: data.emailReminders, loanPeriodDays: String(data.loanPeriodDays),
-      });
-      setLists(data.lists);
-    }
-  }, [data]);
+  const [form, setForm] = useState({
+    dailyFineRate: settings.dailyFineRate.toFixed(2),
+    gracePeriodDays: String(settings.gracePeriodDays),
+    maxFineCap: settings.maxFineCap.toFixed(2),
+    autoSuspendDays: String(settings.autoSuspendDays),
+    emailReminders: settings.emailReminders,
+    loanPeriodDays: String(settings.loanPeriodDays),
+  });
+  const [lists, setLists] = useState<LookupLists>(settings.lists);
 
   const saveFines = async () => {
     try {
@@ -40,8 +46,6 @@ export function Settings() {
   // Read-only rather than hidden: knowing the library's fine rate is useful
   // to anyone at the desk, even if only an Admin may change it.
   const policyInput = canWrite ? inputStyle : { ...inputStyle, background: "var(--bg-soft, #f3edda)", color: "#6f6653" };
-
-  if (loading) return <div style={{ color: "#8a8069" }}>Loading settings…</div>;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
