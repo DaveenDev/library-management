@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, gt, isNull, sql } from "drizzle-orm";
 import { db } from "../db/index.ts";
 import { loans, books, members, fines } from "../db/schema.ts";
 import { ah, HttpError, pageParams } from "../lib/http.ts";
+import { checkinSchema, checkoutSchema, parseBody, parseId } from "../lib/validate.ts";
 import { getSettings } from "../lib/settings.ts";
 import { computeFine, daysLate, loanStatus, MS_PER_DAY } from "../lib/domain.ts";
 import type { Loan } from "@lumen/shared";
@@ -22,7 +23,18 @@ const selectShape = {
   memberCode: members.memberCode,
 };
 
-function serialize(row: any, gracePeriodDays: number): Loan {
+/** Shape returned by a `selectShape` query, before date fields are stringified. */
+type LoanRow = {
+  [K in keyof typeof selectShape]: K extends "borrowedAt" | "dueAt"
+    ? Date
+    : K extends "returnedAt"
+      ? Date | null
+      : K extends "id" | "bookId" | "memberId"
+        ? number
+        : string;
+};
+
+function serialize(row: LoanRow, gracePeriodDays: number): Loan {
   const now = new Date();
   const due = new Date(row.dueAt);
   const returned = row.returnedAt ? new Date(row.returnedAt) : null;
@@ -73,30 +85,40 @@ loansRouter.post(
   "/checkout",
   ah(async (req, res) => {
     const cfg = await getSettings();
-    const b = req.body ?? {};
+    const b = parseBody(checkoutSchema, req.body);
 
     const book = b.bookId
-      ? (await db.select().from(books).where(eq(books.id, Number(b.bookId))))[0]
-      : (await db.select().from(books).where(eq(books.barcode, String(b.bookBarcode ?? "").trim())))[0];
+      ? (await db.select().from(books).where(eq(books.id, b.bookId)))[0]
+      : (await db.select().from(books).where(eq(books.barcode, b.bookBarcode!)))[0];
     if (!book) throw new HttpError(404, "book not found");
-    if (book.availableCopies <= 0) throw new HttpError(409, "no copies available");
 
     const member = b.memberId
-      ? (await db.select().from(members).where(eq(members.id, Number(b.memberId))))[0]
-      : (await db.select().from(members).where(eq(members.memberCode, String(b.memberCode ?? "").trim())))[0];
+      ? (await db.select().from(members).where(eq(members.id, b.memberId)))[0]
+      : (await db.select().from(members).where(eq(members.memberCode, b.memberCode!)))[0];
     if (!member) throw new HttpError(404, "member not found");
     if (member.status === "Suspended") throw new HttpError(409, "member is suspended");
 
     const now = new Date();
     const dueAt = new Date(now.getTime() + cfg.loanPeriodDays * MS_PER_DAY);
-    const [loan] = await db
-      .insert(loans)
-      .values({ bookId: book.id, memberId: member.id, borrowedAt: now, dueAt })
-      .returning();
-    await db
-      .update(books)
-      .set({ availableCopies: book.availableCopies - 1 })
-      .where(eq(books.id, book.id));
+
+    const loan = await db.transaction(async (tx) => {
+      // Claim a copy with a single conditional UPDATE. Checking availability
+      // in JS first and decrementing after would let two concurrent requests
+      // both pass the check and oversubscribe the book; the `> 0` guard lives
+      // in the WHERE clause so the database arbitrates instead.
+      const [claimed] = await tx
+        .update(books)
+        .set({ availableCopies: sql`${books.availableCopies} - 1` })
+        .where(and(eq(books.id, book.id), gt(books.availableCopies, 0)))
+        .returning();
+      if (!claimed) throw new HttpError(409, "no copies available");
+
+      const [created] = await tx
+        .insert(loans)
+        .values({ bookId: book.id, memberId: member.id, borrowedAt: now, dueAt })
+        .returning();
+      return created;
+    });
 
     const [row] = await db
       .select(selectShape)
@@ -111,44 +133,52 @@ loansRouter.post(
 // POST /api/loans/:id/return  (also accepts POST /checkin { bookBarcode })
 async function returnLoan(loanId: number) {
   const cfg = await getSettings();
-  const [loan] = await db.select().from(loans).where(eq(loans.id, loanId));
-  if (!loan) throw new HttpError(404, "loan not found");
-  if (loan.returnedAt) throw new HttpError(409, "loan already returned");
+  const [exists] = await db.select().from(loans).where(eq(loans.id, loanId));
+  if (!exists) throw new HttpError(404, "loan not found");
 
   const now = new Date();
-  await db.update(loans).set({ returnedAt: now }).where(eq(loans.id, loanId));
 
-  const [book] = await db.select().from(books).where(eq(books.id, loan.bookId));
-  if (book) {
-    await db
-      .update(books)
-      .set({ availableCopies: Math.min(book.totalCopies, book.availableCopies + 1) })
-      .where(eq(books.id, book.id));
-  }
-
-  // Late? create an unpaid fine.
-  const { days, amount } = computeFine(new Date(loan.dueAt), now, cfg);
-  let fine = null;
-  if (amount > 0) {
-    [fine] = await db
-      .insert(fines)
-      .values({
-        memberId: loan.memberId,
-        loanId: loan.id,
-        bookId: loan.bookId,
-        daysOverdue: days,
-        amount: amount.toFixed(2),
-        status: "Unpaid",
-      })
+  return db.transaction(async (tx) => {
+    // Closing the loan is the atomic step: only the request that actually
+    // flips returned_at from NULL proceeds. Without this, two concurrent
+    // returns would both restock a copy and both raise a fine.
+    const [loan] = await tx
+      .update(loans)
+      .set({ returnedAt: now })
+      .where(and(eq(loans.id, loanId), isNull(loans.returnedAt)))
       .returning();
-  }
-  return { fine, days, amount };
+    if (!loan) throw new HttpError(409, "loan already returned");
+
+    // `least(...)` keeps the restock from exceeding the copies actually owned.
+    await tx
+      .update(books)
+      .set({ availableCopies: sql`least(${books.totalCopies}, ${books.availableCopies} + 1)` })
+      .where(eq(books.id, loan.bookId));
+
+    // Late? create an unpaid fine.
+    const { days, amount } = computeFine(new Date(loan.dueAt), now, cfg);
+    let fine = null;
+    if (amount > 0) {
+      [fine] = await tx
+        .insert(fines)
+        .values({
+          memberId: loan.memberId,
+          loanId: loan.id,
+          bookId: loan.bookId,
+          daysOverdue: days,
+          amount: amount.toFixed(2),
+          status: "Unpaid",
+        })
+        .returning();
+    }
+    return { fine, days, amount };
+  });
 }
 
 loansRouter.post(
   "/:id/return",
   ah(async (req, res) => {
-    const result = await returnLoan(Number(req.params.id));
+    const result = await returnLoan(parseId(req.params.id));
     res.json(result);
   }),
 );
@@ -156,8 +186,8 @@ loansRouter.post(
 loansRouter.post(
   "/checkin",
   ah(async (req, res) => {
-    const barcode = String(req.body?.bookBarcode ?? "").trim();
-    const [book] = await db.select().from(books).where(eq(books.barcode, barcode));
+    const { bookBarcode } = parseBody(checkinSchema, req.body);
+    const [book] = await db.select().from(books).where(eq(books.barcode, bookBarcode));
     if (!book) throw new HttpError(404, "book not found");
     const [open] = await db
       .select()
@@ -176,13 +206,23 @@ loansRouter.post(
   "/:id/renew",
   ah(async (req, res) => {
     const cfg = await getSettings();
-    const id = Number(req.params.id);
-    const [loan] = await db.select().from(loans).where(eq(loans.id, id));
-    if (!loan) throw new HttpError(404, "loan not found");
-    if (loan.returnedAt) throw new HttpError(409, "cannot renew a returned loan");
-    const base = new Date(Math.max(Date.now(), new Date(loan.dueAt).getTime()));
-    const dueAt = new Date(base.getTime() + cfg.loanPeriodDays * MS_PER_DAY);
-    await db.update(loans).set({ dueAt }).where(eq(loans.id, id));
+    const id = parseId(req.params.id);
+    const [exists] = await db.select().from(loans).where(eq(loans.id, id));
+    if (!exists) throw new HttpError(404, "loan not found");
+
+    // Extend from whichever is later, now or the current due date — computed
+    // in SQL so two rapid renews extend by one period each rather than both
+    // reading the same starting value.
+    const [renewed] = await db
+      .update(loans)
+      .set({
+        // make_interval keeps the loan period a bound parameter rather than
+        // interpolated SQL text.
+        dueAt: sql`greatest(now(), ${loans.dueAt}) + make_interval(days => ${cfg.loanPeriodDays})`,
+      })
+      .where(and(eq(loans.id, id), isNull(loans.returnedAt)))
+      .returning();
+    if (!renewed) throw new HttpError(409, "cannot renew a returned loan");
     const [row] = await db
       .select(selectShape)
       .from(loans)
