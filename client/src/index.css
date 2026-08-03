@@ -43,3 +43,41 @@ tr.lm-row:hover {
 .lm-hover:hover {
   filter: brightness(0.96);
 }
+
+/* ---------- Printing ----------
+   Pages that print (label sheets, report letterhead) wrap the printable
+   region in .lm-print-area. Everything else — sidebar, topbar, controls —
+   is hidden so the sheet lands on paper alone. */
+@media print {
+  @page {
+    margin: 12mm;
+  }
+  body {
+    background: #fff;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .lm-print-area,
+  .lm-print-area * {
+    visibility: visible;
+  }
+  .lm-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    background: #fff;
+  }
+  .lm-no-print {
+    display: none !important;
+  }
+  .lm-label {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
