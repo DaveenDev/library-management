@@ -59,9 +59,9 @@ export function UserManagement() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
       <Card style={{ padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
-        <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+        <div className="lm-searchwrap" style={{ position: "relative", display: "flex", alignItems: "center" }}>
           <span style={{ position: "absolute", left: "13px", display: "flex" }}><Icon name="search" color="#a89d82" size={16} /></span>
-          <input type="search" aria-label="Search staff" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search staff by name or email" style={{ width: "340px", padding: "11px 14px 11px 40px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", fontSize: "14px", color: "#2a2620" }} />
+          <input type="search" aria-label="Search staff" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search staff by name or email" style={{ width: "100%", padding: "11px 14px 11px 40px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", fontSize: "14px", color: "#2a2620" }} />
         </div>
         <button onClick={() => setShowAdd(true)} style={primaryBtn}><Icon name="plus" color="var(--bg-card,#fbf7ee)" size={16} /><span>Add User</span></button>
       </Card>
@@ -136,7 +136,7 @@ function UserModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => v
       <Field label="Full Name *"><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Marcus Lee" style={inputStyle} /></Field>
       <Field label="Email *"><input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={`name@${LIBRARY.emailDomain}`} style={inputStyle} /></Field>
       <Field label="Password *"><input type="password" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="At least 10 characters" style={inputStyle} /></Field>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+      <div className="lm-grid-2" style={{ gap: "16px" }}>
         <Field label="Role"><select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as StaffRole })} style={inputStyle}><option>Admin</option><option>Librarian</option><option>Assistant</option></select></Field>
         <Field label="Status"><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as "Active" | "Disabled" })} style={inputStyle}><option>Active</option><option>Disabled</option></select></Field>
       </div>

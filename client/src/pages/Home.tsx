@@ -82,7 +82,7 @@ export function Home({ navigate }: PageProps) {
         </Card>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+      <div className="lm-grid-2" style={{ gap: "20px" }}>
         <button onClick={() => navigate("circulation")} style={{ background: "var(--bg-card, #fbf7ee)", border: "1px solid var(--border-card, #e4dcc6)", borderRadius: "13px", padding: "26px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "12px", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
           <div style={{ width: "46px", height: "46px", borderRadius: "11px", background: "var(--accent-soft, #e3ebdd)", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="swap" color={accent} size={22} /></div>
           <div style={{ fontFamily: "Spectral,serif", fontSize: "18px", fontWeight: 600, color: "#2a2620" }}>Borrow a Book</div>

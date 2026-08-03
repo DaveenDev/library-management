@@ -68,11 +68,11 @@ export function Settings() {
         </div>
       </Card>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", alignItems: "start" }}>
+      <div className="lm-grid-2" style={{ gap: "20px", alignItems: "start" }}>
         <ChipCard title="Book Shelves" note="Shelf codes used for physical placement" kind="shelf" mono editable={canWrite} values={lists.shelves} onChange={(v) => setLists({ ...lists, shelves: v })} placeholder="e.g. G-11" />
         <ChipCard title="Subject / Category" note="Classifications used across the catalog" kind="subject" editable={canWrite} values={lists.subjects} onChange={(v) => setLists({ ...lists, subjects: v })} placeholder="e.g. Poetry" />
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", alignItems: "start" }}>
+      <div className="lm-grid-2" style={{ gap: "20px", alignItems: "start" }}>
         <ChipCard title="Grade List" note="Grade levels available when registering students" kind="grade" editable={canWrite} values={lists.grades} onChange={(v) => setLists({ ...lists, grades: v })} placeholder="e.g. Grade 13" />
         <ChipCard title="Section List" note="Homeroom / class sections within each grade" kind="section" editable={canWrite} values={lists.sections} onChange={(v) => setLists({ ...lists, sections: v })} placeholder="e.g. Section E" />
       </div>

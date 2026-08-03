@@ -29,9 +29,9 @@ export function Borrowers() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
       <Card style={{ padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
-        <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+        <div className="lm-searchwrap" style={{ position: "relative", display: "flex", alignItems: "center" }}>
           <span style={{ position: "absolute", left: "13px", display: "flex" }}><Icon name="search" color="#a89d82" size={16} /></span>
-          <input type="search" aria-label="Search borrowers" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search members by name or ID" style={{ width: "340px", padding: "11px 14px 11px 40px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", fontSize: "14px", color: "#2a2620" }} />
+          <input type="search" aria-label="Search borrowers" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search members by name or ID" style={{ width: "100%", padding: "11px 14px 11px 40px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", fontSize: "14px", color: "#2a2620" }} />
         </div>
         {canWrite && <button onClick={() => setShowAdd(true)} style={primaryBtn}><Icon name="plus" color="var(--bg-card,#fbf7ee)" size={16} /><span>New Member</span></button>}
       </Card>
@@ -97,7 +97,7 @@ function HistoryModal({ member, onClose }: { member: Member; onClose: () => void
       onClose={onClose}
       footer={<button onClick={onClose} style={ghostBtn}>Close</button>}
     >
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "12px" }}>
+      <div className="lm-grid-4" style={{ gap: "12px" }}>
         {tiles.map((t) => (
           <div key={t.label} style={{ border: "1px solid var(--border-card, #e4dcc6)", borderRadius: "10px", padding: "12px 14px", background: "var(--bg-input, #fffdf7)" }}>
             <div style={{ fontSize: "11.5px", color: "#8a8069" }}>{t.label}</div>
@@ -165,7 +165,7 @@ function MemberModal({ member, onClose, onSaved }: { member: Member | null; onCl
       </>}
     >
       <Field label="Full Name *"><input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. Amara Okonkwo" style={inputStyle} /></Field>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+      <div className="lm-grid-2" style={{ gap: "16px" }}>
         <Field label="Type">
           <select value={form.type} onChange={(e) => set("type", e.target.value as MemberType)} style={inputStyle}>
             <option>Student</option><option>Faculty</option>

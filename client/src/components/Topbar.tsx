@@ -4,10 +4,12 @@ import { THEMES, ACCENTS, type ThemeKey } from "../theme.ts";
 import { useAuth } from "../auth.tsx";
 
 export function Topbar({
-  title, subtitle, accent, theme, onTheme, onAccent, onSearch,
+  title, subtitle, accent, theme, onTheme, onAccent, onSearch, onOpenNav,
 }: {
   title: string; subtitle: string; accent: string; theme: ThemeKey;
   onTheme: (t: ThemeKey) => void; onAccent: (c: string) => void; onSearch: (query: string) => void;
+  /** Opens the off-canvas sidebar. The trigger is hidden above 900px. */
+  onOpenNav: () => void;
 }) {
   const { user } = useAuth();
   const [showPanel, setShowPanel] = useState(false);
@@ -23,13 +25,25 @@ export function Topbar({
   const squareBtn: CSSProperties = { width: "36px", height: "36px", borderRadius: "9px", border: "1px solid var(--border-input, #ddd2b8)", background: "var(--bg-card, #fbf7ee)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" };
 
   return (
-    <header style={{ position: "sticky", top: 0, zIndex: 5, background: "rgba(244,238,222,.88)", backdropFilter: "blur(9px)", borderBottom: "1px solid #e2dac3", padding: "10px 34px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px" }}>
-      <div style={{ minWidth: 0, display: "flex", alignItems: "baseline", gap: "12px" }}>
-        <h1 style={{ margin: 0, fontFamily: "Spectral,serif", fontWeight: 600, fontSize: "21px", color: "#2a2620", letterSpacing: "-.01em", whiteSpace: "nowrap" }}>{title}</h1>
-        <p style={{ margin: 0, fontSize: "12.5px", color: "#8a8069", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</p>
+    <header className="lm-topbar" style={{ position: "sticky", top: 0, zIndex: 5, background: "rgba(244,238,222,.88)", backdropFilter: "blur(9px)", borderBottom: "1px solid #e2dac3", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px" }}>
+      <div style={{ minWidth: 0, display: "flex", alignItems: "center", gap: "12px" }}>
+        <button
+          className="lm-navtoggle"
+          onClick={onOpenNav}
+          aria-label="Open navigation"
+          // `display` is deliberately absent: inline styles beat class
+          // rules, and it is the stylesheet that hides this above 900px.
+          style={{ width: "36px", height: "36px", borderRadius: "9px", border: "1px solid var(--border-input, #ddd2b8)", background: "var(--bg-card, #fbf7ee)", alignItems: "center", justifyContent: "center", cursor: "pointer", flex: "none" }}
+        >
+          <Icon name="menu" color="#6f6653" size={18} />
+        </button>
+        <div style={{ minWidth: 0, display: "flex", alignItems: "baseline", gap: "12px", flexWrap: "wrap" }}>
+          <h1 style={{ margin: 0, fontFamily: "Spectral,serif", fontWeight: 600, fontSize: "21px", color: "#2a2620", letterSpacing: "-.01em" }}>{title}</h1>
+          <p style={{ margin: 0, fontSize: "12.5px", color: "#8a8069", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</p>
+        </div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: "13px", flex: "none" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "9px", background: "var(--bg-card, #fbf7ee)", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", padding: "7px 14px", width: "270px" }}>
+        <div className="lm-topbar-searchwrap" style={{ alignItems: "center", gap: "9px", background: "var(--bg-card, #fbf7ee)", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", padding: "7px 14px", width: "270px" }}>
           <Icon name="search" color="#a89d82" size={16} />
           <input
             type="search"

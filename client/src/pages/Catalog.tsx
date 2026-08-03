@@ -52,9 +52,9 @@ export function Catalog({ initialQuery }: { initialQuery?: { text: string; nonce
     <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
       <Card style={{ padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
-          <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+          <div className="lm-searchwrap" style={{ position: "relative", display: "flex", alignItems: "center" }}>
             <span style={{ position: "absolute", left: "13px", display: "flex" }}><Icon name="search" color="#a89d82" size={16} /></span>
-            <input type="search" aria-label="Search the catalog" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search title, author, subject, accession no. or ISBN" style={{ width: "400px", padding: "11px 14px 11px 40px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", fontSize: "14px", color: "#2a2620" }} />
+            <input type="search" aria-label="Search the catalog" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search title, author, subject, accession no. or ISBN" style={{ width: "100%", padding: "11px 14px 11px 40px", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", background: "var(--bg-input, #fffdf7)", fontSize: "14px", color: "#2a2620" }} />
           </div>
           <span style={{ fontSize: "13px", color: "#8a8069" }}>{data.total} titles</span>
         </div>
@@ -158,7 +158,7 @@ function BookModal({ book, onClose, onSaved }: { book: Book | null; onClose: () 
         <button onClick={save} disabled={saving} style={primaryBtn}><Icon name="check" color="var(--bg-card,#fbf7ee)" size={16} /><span>{book ? "Save Changes" : "Save Book"}</span></button>
       </>}
     >
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+      <div className="lm-grid-2" style={{ gap: "16px" }}>
         <Field label="Title *"><input value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="e.g. Dune" style={inputStyle} /></Field>
         <Field label="Author *"><input value={form.author} onChange={(e) => set("author", e.target.value)} placeholder="e.g. Frank Herbert" style={inputStyle} /></Field>
         <Field label="Subject / Category">
@@ -172,7 +172,7 @@ function BookModal({ book, onClose, onSaved }: { book: Book | null; onClose: () 
         <Field label="Publication Year"><input type="number" value={form.publicationYear ?? ""} onChange={(e) => set("publicationYear", e.target.value ? Number(e.target.value) : null)} placeholder="e.g. 1965" style={inputStyle} /></Field>
         <Field label="Publisher"><input value={form.publisher ?? ""} onChange={(e) => set("publisher", e.target.value)} placeholder="e.g. Ace Books" style={inputStyle} /></Field>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+      <div className="lm-grid-2" style={{ gap: "16px" }}>
         <Field label="Accession Number"><input value={form.accessionNo ?? ""} onChange={(e) => set("accessionNo", e.target.value)} placeholder="Auto-assigned on save (0001)" style={{ ...inputStyle, fontFamily: "'IBM Plex Mono',monospace" }} /></Field>
         <Field label="Barcode"><input value={form.barcode ?? ""} onChange={(e) => set("barcode", e.target.value)} placeholder="Auto-generated on save (LIB-000xxx)" style={{ ...inputStyle, fontFamily: "'IBM Plex Mono',monospace" }} /></Field>
       </div>

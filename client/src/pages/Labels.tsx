@@ -80,7 +80,7 @@ export function Labels() {
   });
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: "20px", alignItems: "start" }}>
+    <div className="lm-grid-aside" style={{ gap: "20px", alignItems: "start" }}>
       <Card style={{ padding: "20px 22px" }} className="lm-no-print">
         <h3 style={{ margin: "0 0 4px", fontFamily: "Spectral,serif", fontSize: "17px", fontWeight: 600 }}>Generate Labels</h3>
         <p style={{ margin: "0 0 18px", fontSize: "12.5px", color: "#8a8069" }}>Scannable Code 128 and QR labels</p>

@@ -44,7 +44,7 @@ export function Dashboard({ navigate }: PageProps) {
         <Stat label="Fines Outstanding" value={money(data.finesOutstanding)} note={`Across ${data.membersWithFines} members`} dot="#8a6a1e" />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: "20px", alignItems: "start" }}>
+      <div className="lm-grid-main" style={{ gap: "20px", alignItems: "start" }}>
         <Card style={{ padding: "20px 22px" }}>
           <h3 style={{ margin: "0 0 4px", fontFamily: "Spectral,serif", fontSize: "17px", fontWeight: 600 }}>Recent Activity</h3>
           <p style={{ margin: "0 0 14px", fontSize: "12.5px", color: "#8a8069" }}>Latest transactions across the desk</p>
@@ -77,7 +77,7 @@ export function Dashboard({ navigate }: PageProps) {
         </Card>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: "20px", alignItems: "start" }}>
+      <div className="lm-grid-main" style={{ gap: "20px", alignItems: "start" }}>
         <Card style={{ padding: "20px 22px" }}>
           <h3 style={{ margin: "0 0 16px", fontFamily: "Spectral,serif", fontSize: "17px", fontWeight: 600 }}>Most Borrowed</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>

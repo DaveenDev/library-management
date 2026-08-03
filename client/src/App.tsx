@@ -73,6 +73,7 @@ function Workspace() {
   const [accent, setAccent] = useState<string>(DEFAULT_ACCENT);
   const [loaded, setLoaded] = useState(false);
   const [catalogQuery, setCatalogQuery] = useState<{ text: string; nonce: number } | undefined>(undefined);
+  const [navOpen, setNavOpen] = useState(false);
 
   // load persisted appearance
   useEffect(() => {
@@ -92,11 +93,14 @@ function Workspace() {
   const changeTheme = (t: ThemeKey) => { setTheme(t); persist({ theme: t }); };
   const changeAccent = (c: string) => { setAccent(c); persist({ accent: c }); };
 
-  const navigate = (s: Section) => setSection(s);
+  // Picking a destination closes the drawer; above the breakpoint there is
+  // no drawer and this does nothing.
+  const navigate = (s: Section) => { setSection(s); setNavOpen(false); };
 
   const runGlobalSearch = (query: string) => {
     setCatalogQuery({ text: query, nonce: Date.now() });
     setSection("catalog");
+    setNavOpen(false);
   };
 
   const page = (() => {
@@ -117,10 +121,10 @@ function Workspace() {
 
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden", fontFamily: "'IBM Plex Sans', system-ui, sans-serif", ...themeVars(theme, accent) }}>
-      <Sidebar section={section} accent={accent} onNavigate={navigate} />
+      <Sidebar section={section} accent={accent} onNavigate={navigate} open={navOpen} onClose={() => setNavOpen(false)} />
       <main style={{ flex: 1, minWidth: 0, height: "100vh", overflowY: "auto", display: "flex", flexDirection: "column" }}>
-        <Topbar title={TITLES[section]} subtitle={SUBS[section]} accent={accent} theme={theme} onTheme={changeTheme} onAccent={changeAccent} onSearch={runGlobalSearch} />
-        <div style={{ padding: "26px 34px 52px", flex: 1 }}>{page}</div>
+        <Topbar title={TITLES[section]} subtitle={SUBS[section]} accent={accent} theme={theme} onTheme={changeTheme} onAccent={changeAccent} onSearch={runGlobalSearch} onOpenNav={() => setNavOpen(true)} />
+        <div className="lm-page" style={{ flex: 1 }}>{page}</div>
       </main>
     </div>
   );

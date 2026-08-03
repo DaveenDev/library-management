@@ -83,7 +83,7 @@ export function Circulation() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-      {canWrite && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+      {canWrite && <div className="lm-grid-2" style={{ gap: "20px" }}>
         <Card style={{ padding: "20px 22px" }}>
           <h3 style={{ margin: "0 0 4px", fontFamily: "Spectral,serif", fontSize: "17px", fontWeight: 600 }}>Check Out</h3>
           <p style={{ margin: "0 0 16px", fontSize: "12.5px", color: "#8a8069" }}>Scan the book and the member ID</p>
