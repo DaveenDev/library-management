@@ -4,7 +4,7 @@ import { useAsync } from "../hooks.ts";
 import { Card, Field, useToast } from "../components/ui.tsx";
 import { Icon } from "../icons.tsx";
 import { primaryBtn, inputStyle } from "../theme.ts";
-import type { LookupLists } from "@lumen/shared";
+import { CURRENCY_SYMBOL, type LookupLists } from "@lumen/shared";
 
 export function Settings() {
   const toast = useToast();
@@ -42,9 +42,9 @@ export function Settings() {
         <h3 style={{ margin: "0 0 4px", fontFamily: "Spectral,serif", fontSize: "17px", fontWeight: 600 }}>Fines &amp; Penalties</h3>
         <p style={{ margin: "0 0 16px", fontSize: "12.5px", color: "#8a8069" }}>Configure how overdue fines are calculated and enforced</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: "16px" }}>
-          <Field label="Daily Fine Rate ($)"><input value={form.dailyFineRate} onChange={(e) => setForm({ ...form, dailyFineRate: e.target.value })} style={inputStyle} /></Field>
+          <Field label={`Daily Fine Rate (${CURRENCY_SYMBOL})`}><input value={form.dailyFineRate} onChange={(e) => setForm({ ...form, dailyFineRate: e.target.value })} style={inputStyle} /></Field>
           <Field label="Grace Period (days)"><input value={form.gracePeriodDays} onChange={(e) => setForm({ ...form, gracePeriodDays: e.target.value })} style={inputStyle} /></Field>
-          <Field label="Maximum Fine Cap ($)"><input value={form.maxFineCap} onChange={(e) => setForm({ ...form, maxFineCap: e.target.value })} style={inputStyle} /></Field>
+          <Field label={`Maximum Fine Cap (${CURRENCY_SYMBOL})`}><input value={form.maxFineCap} onChange={(e) => setForm({ ...form, maxFineCap: e.target.value })} style={inputStyle} /></Field>
           <Field label="Loan Period (days)"><input value={form.loanPeriodDays} onChange={(e) => setForm({ ...form, loanPeriodDays: e.target.value })} style={inputStyle} /></Field>
           <Field label="Auto-suspend After (days overdue)"><input value={form.autoSuspendDays} onChange={(e) => setForm({ ...form, autoSuspendDays: e.target.value })} style={inputStyle} /></Field>
         </div>

@@ -27,6 +27,7 @@ export default function App() {
   const [theme, setTheme] = useState<ThemeKey>("parchment");
   const [accent, setAccent] = useState<string>(DEFAULT_ACCENT);
   const [loaded, setLoaded] = useState(false);
+  const [catalogQuery, setCatalogQuery] = useState<{ text: string; nonce: number } | undefined>(undefined);
 
   // load persisted appearance
   useEffect(() => {
@@ -48,11 +49,16 @@ export default function App() {
 
   const navigate = (s: Section) => setSection(s);
 
+  const runGlobalSearch = (query: string) => {
+    setCatalogQuery({ text: query, nonce: Date.now() });
+    setSection("catalog");
+  };
+
   const page = (() => {
     switch (section) {
       case "home": return <Home navigate={navigate} />;
       case "dashboard": return <Dashboard navigate={navigate} />;
-      case "catalog": return <Catalog />;
+      case "catalog": return <Catalog initialQuery={catalogQuery} />;
       case "borrowers": return <Borrowers />;
       case "circulation": return <Circulation />;
       case "reservations": return <Reservations />;
@@ -69,7 +75,7 @@ export default function App() {
       <div style={{ display: "flex", height: "100vh", overflow: "hidden", fontFamily: "'IBM Plex Sans', system-ui, sans-serif", ...themeVars(theme, accent) }}>
         <Sidebar section={section} accent={accent} onNavigate={navigate} />
         <main style={{ flex: 1, height: "100vh", overflowY: "auto", display: "flex", flexDirection: "column" }}>
-          <Topbar title={TITLES[section]} subtitle={SUBS[section]} accent={accent} theme={theme} onTheme={changeTheme} onAccent={changeAccent} />
+          <Topbar title={TITLES[section]} subtitle={SUBS[section]} accent={accent} theme={theme} onTheme={changeTheme} onAccent={changeAccent} onSearch={runGlobalSearch} />
           <div style={{ padding: "26px 34px 52px", flex: 1 }}>{page}</div>
         </main>
       </div>

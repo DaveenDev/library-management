@@ -1,14 +1,23 @@
 import { useState, type CSSProperties } from "react";
 import { Icon } from "../icons.tsx";
 import { THEMES, ACCENTS, type ThemeKey } from "../theme.ts";
+import { CURRENT_USER } from "../branding.ts";
 
 export function Topbar({
-  title, subtitle, accent, theme, onTheme, onAccent,
+  title, subtitle, accent, theme, onTheme, onAccent, onSearch,
 }: {
   title: string; subtitle: string; accent: string; theme: ThemeKey;
-  onTheme: (t: ThemeKey) => void; onAccent: (c: string) => void;
+  onTheme: (t: ThemeKey) => void; onAccent: (c: string) => void; onSearch: (query: string) => void;
 }) {
   const [showPanel, setShowPanel] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const submitSearch = () => {
+    const q = search.trim();
+    if (!q) return;
+    onSearch(q);
+    setSearch("");
+  };
   const avatarStyle: CSSProperties = { width: "36px", height: "36px", borderRadius: "50%", background: accent, color: "var(--bg-page, #f4eede)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, fontSize: "14px", fontFamily: "Spectral, serif", flex: "none" };
   const squareBtn: CSSProperties = { width: "36px", height: "36px", borderRadius: "9px", border: "1px solid var(--border-input, #ddd2b8)", background: "var(--bg-card, #fbf7ee)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" };
 
@@ -21,11 +30,18 @@ export function Topbar({
       <div style={{ display: "flex", alignItems: "center", gap: "13px", flex: "none" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "9px", background: "var(--bg-card, #fbf7ee)", border: "1px solid var(--border-input, #ddd2b8)", borderRadius: "9px", padding: "7px 14px", width: "270px" }}>
           <Icon name="search" color="#a89d82" size={16} />
-          <span style={{ fontSize: "13.5px", color: "#a89d82" }}>Search the whole system…</span>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submitSearch(); } }}
+            placeholder="Search the whole system…"
+            title="Searches the book catalog by title, author, subject, accession no. or barcode"
+            className="lm-topbar-search"
+            style={{ border: "none", background: "transparent", outline: "none", fontSize: "13.5px", color: "#2a2620", width: "100%", fontFamily: "inherit" }}
+          />
         </div>
-        <button style={{ ...squareBtn, position: "relative" }}>
+        <button title="No new notifications" style={{ ...squareBtn, cursor: "default" }}>
           <Icon name="bell" color="#6f6653" size={17} />
-          <span style={{ position: "absolute", top: "9px", right: "10px", width: "7px", height: "7px", borderRadius: "50%", background: "#a4472f", border: "1.5px solid var(--bg-card, #fbf7ee)" }} />
         </button>
         <div style={{ position: "relative" }}>
           <button title="Appearance" onClick={() => setShowPanel((v) => !v)} style={squareBtn}>
@@ -56,7 +72,7 @@ export function Topbar({
             </>
           )}
         </div>
-        <div style={avatarStyle}>BH</div>
+        <div style={avatarStyle}>{CURRENT_USER.initials}</div>
       </div>
     </header>
   );

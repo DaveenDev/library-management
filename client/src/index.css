@@ -43,6 +43,9 @@ tr.lm-row:hover {
 .lm-hover:hover {
   filter: brightness(0.96);
 }
+.lm-topbar-search::placeholder {
+  color: #a89d82;
+}
 
 /* ---------- Printing ----------
    Pages that print (label sheets, report letterhead) wrap the printable

@@ -26,6 +26,7 @@ export function Reservations() {
   };
 
   const queueLabel = (r: Reservation) => (r.queuePosition <= 1 ? "—" : `${r.queuePosition}${r.queuePosition === 2 ? "nd" : r.queuePosition === 3 ? "rd" : "th"} in queue`);
+  const isOpen = (r: Reservation) => r.status === "Waiting" || r.status === "Ready for pickup";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
@@ -51,8 +52,10 @@ export function Reservations() {
                   <td style={tdStyle}>{queueLabel(r)}</td>
                   <td style={tdStyle}><Badge kind={statusKind(r.status)}>{r.status}</Badge></td>
                   <td style={tdStyle}><div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                    <button onClick={() => fulfill(r)} style={{ padding: "7px 13px", borderRadius: "8px", border: "1px solid var(--accent, #3d6b53)", background: "var(--accent-soft, #e3ebdd)", fontFamily: "inherit", fontSize: "12.5px", fontWeight: 600, color: "var(--accent, #3d6b53)", cursor: "pointer" }}>Fulfill</button>
-                    <button onClick={() => cancel(r)} style={{ padding: "7px 13px", borderRadius: "8px", border: "1px solid var(--border-input, #ddd2b8)", background: "var(--bg-input, #fffdf7)", fontFamily: "inherit", fontSize: "12.5px", fontWeight: 500, color: "#a4472f", cursor: "pointer" }}>Cancel</button>
+                    {isOpen(r) && (<>
+                      <button onClick={() => fulfill(r)} style={{ padding: "7px 13px", borderRadius: "8px", border: "1px solid var(--accent, #3d6b53)", background: "var(--accent-soft, #e3ebdd)", fontFamily: "inherit", fontSize: "12.5px", fontWeight: 600, color: "var(--accent, #3d6b53)", cursor: "pointer" }}>Fulfill</button>
+                      <button onClick={() => cancel(r)} style={{ padding: "7px 13px", borderRadius: "8px", border: "1px solid var(--border-input, #ddd2b8)", background: "var(--bg-input, #fffdf7)", fontFamily: "inherit", fontSize: "12.5px", fontWeight: 500, color: "#a4472f", cursor: "pointer" }}>Cancel</button>
+                    </>)}
                   </div></td>
                 </tr>
               ))}

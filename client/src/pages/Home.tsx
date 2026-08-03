@@ -9,12 +9,16 @@ import type { Book } from "@lumen/shared";
 import type { PageProps } from "../App.tsx";
 
 export function Home({ navigate }: PageProps) {
-  const toast = useToast();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Book[]>([]);
   const [borrowBook, setBorrowBook] = useState<Book | null>(null);
   const [reserveBook, setReserveBook] = useState<Book | null>(null);
-  const { data: dash } = useAsync(() => api.dashboard(), []);
+  const { data: dash, refresh: refreshDash } = useAsync(() => api.dashboard(), []);
+
+  const runSearch = (q: string) => {
+    if (!q) { setResults([]); return; }
+    api.books({ q, pageSize: 5 }).then((r) => setResults(r.items)).catch(() => {});
+  };
 
   useEffect(() => {
     const q = query.trim();
@@ -25,6 +29,14 @@ export function Home({ navigate }: PageProps) {
     }, 200);
     return () => { cancelled = true; clearTimeout(t); };
   }, [query]);
+
+  // After a borrow/reserve completes, availableCopies and "Just Happened"
+  // both need a fresh fetch. setQuery(query) alone would not re-run the
+  // debounced effect above since React bails out on an unchanged string.
+  const refreshAfterAction = () => {
+    runSearch(query.trim());
+    refreshDash();
+  };
 
   const accent = "var(--accent, #3d6b53)";
 
@@ -94,8 +106,8 @@ export function Home({ navigate }: PageProps) {
         </div>
       </Card>
 
-      {borrowBook && <BorrowModal book={borrowBook} onClose={() => setBorrowBook(null)} onDone={() => { setBorrowBook(null); toast("Checked out"); setQuery(query); }} />}
-      {reserveBook && <ReserveModal book={reserveBook} onClose={() => setReserveBook(null)} onDone={() => { setReserveBook(null); navigate("reservations"); }} />}
+      {borrowBook && <BorrowModal book={borrowBook} onClose={() => setBorrowBook(null)} onDone={() => { setBorrowBook(null); refreshAfterAction(); }} />}
+      {reserveBook && <ReserveModal book={reserveBook} onClose={() => setReserveBook(null)} onDone={() => { setReserveBook(null); refreshAfterAction(); navigate("reservations"); }} />}
     </div>
   );
 }

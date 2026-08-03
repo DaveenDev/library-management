@@ -90,12 +90,16 @@ reservationsRouter.post(
 reservationsRouter.post(
   "/:id/fulfill",
   ah(async (req, res) => {
+    const [existing] = await db.select().from(reservations).where(eq(reservations.id, Number(req.params.id)));
+    if (!existing) throw new HttpError(404, "reservation not found");
+    if (!OPEN_STATUSES.includes(existing.status)) {
+      throw new HttpError(409, `hold is already ${existing.status.toLowerCase()}`);
+    }
     const [row] = await db
       .update(reservations)
       .set({ status: "Fulfilled" })
       .where(eq(reservations.id, Number(req.params.id)))
       .returning();
-    if (!row) throw new HttpError(404, "reservation not found");
     res.json(row);
   }),
 );
@@ -103,12 +107,16 @@ reservationsRouter.post(
 reservationsRouter.post(
   "/:id/cancel",
   ah(async (req, res) => {
+    const [existing] = await db.select().from(reservations).where(eq(reservations.id, Number(req.params.id)));
+    if (!existing) throw new HttpError(404, "reservation not found");
+    if (!OPEN_STATUSES.includes(existing.status)) {
+      throw new HttpError(409, `hold is already ${existing.status.toLowerCase()}`);
+    }
     const [row] = await db
       .update(reservations)
       .set({ status: "Cancelled" })
       .where(eq(reservations.id, Number(req.params.id)))
       .returning();
-    if (!row) throw new HttpError(404, "reservation not found");
     res.json(row);
   }),
 );

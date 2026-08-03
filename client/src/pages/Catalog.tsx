@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { api } from "../api.ts";
 import { usePaginated, paginationProps } from "../hooks.ts";
@@ -11,15 +11,27 @@ import type { Book, BookInput } from "@lumen/shared";
 
 const SUBJECTS = ["All", "Fiction", "Non-Fiction", "Science", "History", "Technology", "Self-Help", "Biography", "Classic", "Memoir", "Science Fiction", "Reference"];
 
-export function Catalog() {
+export function Catalog({ initialQuery }: { initialQuery?: { text: string; nonce: number } }) {
   const toast = useToast();
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(initialQuery?.text ?? "");
   const [subject, setSubject] = useState("All");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<Book | null>(null);
   const [reserving, setReserving] = useState<Book | null>(null);
+
+  // The topbar search lands here (Catalog already covers title / author /
+  // subject / accession no. / barcode / ISBN). The nonce lets a second
+  // topbar search overwrite the query even if the text is identical to
+  // what's already in the box.
+  useEffect(() => {
+    if (initialQuery === undefined) return;
+    setQ(initialQuery.text);
+    setSubject("All");
+    setPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQuery?.nonce]);
 
   const { data, loading, refresh } = usePaginated(
     (p) => api.books(p),
