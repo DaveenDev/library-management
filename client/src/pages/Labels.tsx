@@ -1,7 +1,8 @@
-import { useId, useState } from "react";
+import { useCallback, useId, useState } from "react";
 import { api } from "../api.ts";
-import { useAsync } from "../hooks.ts";
+import { useRecordSearch } from "../hooks.ts";
 import { Card } from "../components/ui.tsx";
+import { RecordPicker } from "../components/RecordPicker.tsx";
 import { Barcode, QrCode } from "../components/Barcode.tsx";
 import { Icon } from "../icons.tsx";
 import { primaryBtnWide, inputStyle, labelStyle } from "../theme.ts";
@@ -29,13 +30,13 @@ export function Labels() {
   const [bookId, setBookId] = useState<number | null>(null);
   const [memberId, setMemberId] = useState<number | null>(null);
 
-  const { data: bookData } = useAsync(() => api.books({ pageSize: 200 }), []);
-  const { data: memberData } = useAsync(() => api.members({ pageSize: 200 }), []);
-  const books = bookData?.items ?? [];
-  const members = memberData?.items ?? [];
+  const bookSearch = useRecordSearch(useCallback((p) => api.books(p), []));
+  const memberSearch = useRecordSearch(useCallback((p) => api.members(p), []));
 
-  const book = books.find((b) => b.id === bookId) ?? books[0];
-  const member = members.find((m) => m.id === memberId) ?? members[0];
+  // Derived from the matches on screen, so an empty picker still shows the
+  // first result and the sheet is never blank on arrival.
+  const book = bookSearch.results.find((b) => b.id === bookId) ?? bookSearch.results[0];
+  const member = memberSearch.results.find((m) => m.id === memberId) ?? memberSearch.results[0];
 
   const item: LabelData | null =
     source === "books"
@@ -94,19 +95,31 @@ export function Labels() {
         </div>
 
         {source === "books" ? (
-          <>
-            <label htmlFor={`${fieldIds}-book`} style={labelStyle}>Title</label>
-            <select id={`${fieldIds}-book`} value={book?.id ?? ""} onChange={(e) => setBookId(Number(e.target.value))} style={{ ...inputStyle, marginBottom: "14px" }}>
-              {books.map((b) => <option key={b.id} value={b.id}>{b.title} — {b.author}</option>)}
-            </select>
-          </>
+          <RecordPicker
+            label="Title"
+            placeholder="Search title, author or barcode"
+            emptyText="No titles match that search."
+            query={bookSearch.query}
+            onQuery={bookSearch.setQuery}
+            results={bookSearch.results}
+            loading={bookSearch.loading}
+            value={book ?? null}
+            onPick={(b) => setBookId(b.id)}
+            describe={(b) => ({ primary: b.title, secondary: `${b.author} · ${b.barcode}` })}
+          />
         ) : (
-          <>
-            <label htmlFor={`${fieldIds}-member`} style={labelStyle}>Borrower</label>
-            <select id={`${fieldIds}-member`} value={member?.id ?? ""} onChange={(e) => setMemberId(Number(e.target.value))} style={{ ...inputStyle, marginBottom: "14px" }}>
-              {members.map((m) => <option key={m.id} value={m.id}>{m.memberCode} — {m.name}</option>)}
-            </select>
-          </>
+          <RecordPicker
+            label="Borrower"
+            placeholder="Search name or member ID"
+            emptyText="No borrowers match that search."
+            query={memberSearch.query}
+            onQuery={memberSearch.setQuery}
+            results={memberSearch.results}
+            loading={memberSearch.loading}
+            value={member ?? null}
+            onPick={(m) => setMemberId(m.id)}
+            describe={(m) => ({ primary: m.name, secondary: `${m.memberCode} · ${m.type}` })}
+          />
         )}
 
         <div id={`${fieldIds}-type`} style={labelStyle}>Label type</div>

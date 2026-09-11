@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { api } from "../api.ts";
-import { useAsync } from "../hooks.ts";
+import { useRecordSearch } from "../hooks.ts";
 import { Modal, Field, useToast } from "./ui.tsx";
+import { RecordPicker } from "./RecordPicker.tsx";
 import { Icon } from "../icons.tsx";
 import { primaryBtn, inputStyle, ghostBtn } from "../theme.ts";
 import type { Book } from "@lumen/shared";
@@ -24,10 +25,17 @@ export function ReserveModal({
   const [memberCode, setMemberCode] = useState("");
   const [bookId, setBookId] = useState<number | null>(book?.id ?? null);
   const [saving, setSaving] = useState(false);
-  const { data: bookData } = useAsync(() => (book ? Promise.resolve(null) : api.books({ pageSize: 200 })), [book]);
-  const books = bookData?.items ?? [];
+  // Skipped entirely when the caller already knows the title, as the picker
+  // is not rendered then and the request would be wasted.
+  const bookSearch = useRecordSearch(
+    useCallback(
+      (p) => (book ? Promise.resolve({ items: [], total: 0, page: 1, pageSize: 0 }) : api.books(p)),
+      [book],
+    ),
+  );
 
   const chosenId = book?.id ?? bookId;
+  const chosen = bookSearch.results.find((b) => b.id === bookId) ?? null;
 
   const submit = async () => {
     if (!chosenId) { toast("Pick a title to reserve", "bad"); return; }
@@ -57,12 +65,18 @@ export function ReserveModal({
       </>}
     >
       {!book && (
-        <Field label="Title">
-          <select value={bookId ?? ""} onChange={(e) => setBookId(Number(e.target.value))} style={inputStyle}>
-            <option value="">Select a title…</option>
-            {books.map((b) => <option key={b.id} value={b.id}>{b.title} — {b.author}</option>)}
-          </select>
-        </Field>
+        <RecordPicker
+          label="Title"
+          placeholder="Search title, author or barcode"
+          emptyText="No titles match that search."
+          query={bookSearch.query}
+          onQuery={bookSearch.setQuery}
+          results={bookSearch.results}
+          loading={bookSearch.loading}
+          value={chosen}
+          onPick={(b) => setBookId(b.id)}
+          describe={(b) => ({ primary: b.title, secondary: `${b.author} · ${b.barcode}` })}
+        />
       )}
       <Field label="Member ID">
         <input
