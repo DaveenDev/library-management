@@ -81,3 +81,31 @@ export function paginationProps(total: number, page: number, pageSize: number, s
     onPageSize: (n: number) => { setPageSize(n); setPage(1); },
   };
 }
+
+/**
+ * Debounced search-as-you-type over a paginated endpoint.
+ *
+ * The pickers that use this used to load one page and render it into a
+ * <select>. The server caps a page at 100 rows, so any record past the
+ * hundredth was unreachable — silently, because a short dropdown looks
+ * complete. Searching on the server instead means collection size stops
+ * mattering; only the handful of matches on screen is ever fetched.
+ */
+export function useRecordSearch<T>(
+  fetcher: (p: ListParams) => Promise<Paginated<T>>,
+  pageSize = 8,
+) {
+  const [query, setQuery] = useState("");
+  const [debounced, setDebounced] = useState("");
+
+  useEffect(() => {
+    // Fires on a timer rather than during the effect, so a fast typist gets
+    // one request instead of one per keystroke.
+    const t = setTimeout(() => setDebounced(query), 200);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const { data, loading } = useAsync(() => fetcher({ q: debounced, pageSize }), [debounced, pageSize]);
+
+  return { query, setQuery, results: data?.items ?? [], loading };
+}
