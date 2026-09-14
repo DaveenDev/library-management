@@ -1,0 +1,156 @@
+{
+  "startedAt": 1789362668084,
+  "finishedAt": 1789362743924,
+  "results": [
+    {
+      "id": "role-assistant",
+      "title": "An assistant can work the desk but not run the library",
+      "persona": "assistant",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "They are told which role they hold",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "User Management is not offered to them at all",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "They can still read the catalogue",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "But they are not offered Add, Edit or Delete",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "They can check a book out — that is their job",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Fines are visible but not collectable by them",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Fine policy is readable but locked",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "And the shelf lists cannot be edited",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Tidy up: return the book they borrowed",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [],
+      "consoleErrors": [],
+      "screenshots": [
+        "role-assistant-01-assistant-catalogue.png"
+      ],
+      "ms": 18072
+    },
+    {
+      "id": "role-librarian",
+      "title": "A librarian runs the collection but not the staff list",
+      "persona": "librarian",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "They can catalogue",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "They can collect fines",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "But staff accounts are not theirs to manage",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "And fine policy is an administrator's call",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Changing the theme still works for them",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [
+        {
+          "severity": "polish",
+          "text": "Theme persisted across reload as rgb(221, 227, 208)"
+        }
+      ],
+      "consoleErrors": [],
+      "screenshots": [],
+      "ms": 31599
+    },
+    {
+      "id": "role-admin",
+      "title": "An administrator manages staff accounts",
+      "persona": "admin",
+      "status": "passed",
+      "steps": [
+        {
+          "name": "User Management is available to them",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "The roles card describes what the roles actually do",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Add a staff account with a password",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "A short password is refused before it is stored",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "The new clerk can sign in with what they were given",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "An admin cannot lock themselves out",
+          "status": "passed",
+          "detail": null
+        },
+        {
+          "name": "Tidy up: remove the test clerk",
+          "status": "passed",
+          "detail": null
+        }
+      ],
+      "observations": [],
+      "consoleErrors": [],
+      "screenshots": [
+        "role-admin-01-roles-card.png"
+      ],
+      "ms": 19355
+    }
+  ]
+}
